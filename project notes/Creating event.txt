@@ -1,0 +1,59 @@
+Creating event:
+Person creating event (link to profile)
+event category
+location
+name of event
+date of event
+	-recurring (and how often does it recur)? -over multiple dates?
+time of event (probably time range, might have to be connected to the date)
+experience level of attendee
+looking for list of experience options for others
+Can provide rideshare/LF rideshare/will meet there
+is a local
+is a guide
+
+Example:
+
+SINGLE EVENT
+Jonah Douglas (link to profile)
+Mountain Biking
+Devou Park
+MTB @ Devou
+Saturday 9/23/23 @
+Start Time: 8:30am-10:00am
+Duration: 2 hours 
+OR
+End Time: 10:30-12:00
+Local
+LF: Beginner - Intermediate
+Can provide rideshare
+
+==========================================================================================================
+
+Looking for event:
+Pull up all event cards meeting this list of criteria-
+	-event category
+	-location (defaults to current location if allowed, otherwise location specified)
+	-date of event (defaults to closest upcoming event, otherwise date specified)\
+	-
+
+Possible filters-
+	-Person creating event
+	-name of event
+	-duration of event
+	-locals
+	-guides
+	-rideshare situation
+	-experience level
+
+Example:
+click on Mountain Biking card ->
+-all results appear that are closest upcoming mountain biking events
+
+
+
+
+
+
+
+

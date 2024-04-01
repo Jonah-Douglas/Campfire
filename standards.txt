@@ -1,0 +1,11 @@
+# JD TODO: We'll see how tightly we stick to these, might again be fluff that needs removed later on
+
+# API Resources design
+We are using python's fastAPI backend framework. We are using OpenAPI's Swagger for creating and 
+maintaining documentation for the Campfire API. We are utilizing sqlalchemy alongside pydantic for 
+creating our ORM, and database migrations are being performed by Alembic on our PostgreSQL database.
+
+Below are some standards for creating new resources within the API.
+
+-All requests should define a summary and a response_description.
+-All requests that require a body should create an example body with a real world example.
