@@ -1,0 +1,91 @@
+User:
+UserID (int pk not null)
+Name (str First, str Last not null)
+Age (int not null)
+IG/FB Verified (bool not null)
+LocalLocation (string (general loc?) not null)
+NewToArea (bool, maybe change ourselves after 3-6 months, not null)
+Cell # (int nullable (depends on if they want messaging))
+
+UserLocation:
+UserLocationID (int pk not null)
+UserSettingID (int fk not null)
+*Could put in location manually via a search or something*
+Latitude (float nullable)
+Longitude (float nullable)
+
+UnitedStatesLocation:
+UnitedStatesLocationID (pk)
+UserLocationID (fk)
+State (string (abbreviation) not null)
+County
+Zip code
+city name
+
+UserSettings:
+UserSettingID (int pk not null)
+UserID (int fk not null)
+IsDarkMode (bool not null)
+IsMiles (bool not null)
+IsMessagingEnabled (bool)
+IsLocationEnabled (bool)
+
+Interests: (maybe partition table by locations?)
+UserID (int pk not null)
+InterestID (enum not null)
+
+MutualFriends:
+2d graph (nodes represent users and edges represent friendships)
+	Inserting on graph O(1)
+	Finding on graph O(1)
+
+UserAttributes:
+UserAttributeID (int pk not null)
+UserID (int fk not null)
+Friendly (int not null)
+Knowledgable (int not null)
+Timely (int not null)
+Responsive (int not null)
+
+UserLocationInterest:
+UserLocationInterestID (int pk not null)
+UserID (int fk not null)
+Range (int)
+LocationID (string/int/GPSCoord?)
+
+Event:
+EventID (int pk not null)
+Name (string not null)
+Description (string not null)
+Publicity (enum (public, interesttype, friends, invite only) not null)
+StartDate (datetime not null)
+EndDate (datetime not null)
+Location (string not null)
+Cost (float not null)
+IsSystem (bool not null)
+InterestType (enum not null)
+Experience (enum not null)
+IsRecurring (bool not null)
+Capacity (int not null)
+
+UserEvent (Event):
+UserEventID (int pk not null)
+EventID (int fk not null)
+UserID (int fk not null)
+
+
+IsCarProvided (bool not null)
+SeatsAvailable (int nullable)
+
+
+
+
+
+
+
+MESSAGING
+
+MessageGroups:
+Name (string)
+Members (users in the group)
+IsPublic (bool)
