@@ -11,6 +11,12 @@ class UserBase(SQLModel):
     is_superuser: bool = False
     full_name: str | None = None
 
+## Required user properties on creation
+class UserCreate(UserBase):
+    email: str
+    password: str
+    full_name: str | None = None
+
 #----------------------------
 # User table
 class User(UserBase, table=True):
@@ -28,5 +34,16 @@ class UserOut(UserBase):
 class UsersOut(SQLModel):
     data: list[UserOut]
     count: int
+
+#============================
+# Tokens
+## JSON payload containing the access token
+class Token(SQLModel):
+    access_token: str
+    token_type: str = "bearer"
+
+## JWToken contents
+class TokenPayload(SQLModel):
+    sub: int | None = None
 
 #============================
