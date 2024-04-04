@@ -1,3 +1,4 @@
+# JD TODO: Break this class out into a models folder, filled with classes pertaining to the model categories
 from sqlmodel import Field, SQLModel
 
 
@@ -42,6 +43,7 @@ class UsersOut(SQLModel):
 
 #============================
 # Tokens
+
 ## JSON payload containing the access token
 class Token(SQLModel):
     access_token: str
@@ -52,7 +54,8 @@ class TokenPayload(SQLModel):
     sub: int | None = None
 
 #============================
-# Message
+# Messages
+
 ## Generic model for returning message response
 class Message(SQLModel):
     message: str

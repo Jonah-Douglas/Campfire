@@ -2,11 +2,7 @@
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import func, select
-from api.dependencies import (
-    CurrentUser,
-    get_current_user,
-    SessionDependency,
-)
+from api.dependencies import CurrentUser, get_current_user, SessionDependency
 from models import (
     Message,
     User,
@@ -29,13 +25,11 @@ def read_users(session: SessionDependency, skip: int = 0, limit: int = 100) -> A
     """
     Retrieve users.
     """
-
     count_statement = select(func.count()).select_from(User)
     count = session.exec(count_statement).one()
 
     statement = select(User).offset(skip).limit(limit)
     users = session.exec(statement).all()
-
     return UsersOut(data=users, count=count)
 
 
