@@ -1,5 +1,5 @@
 from sqlmodel import Session, select
-from models import User, UserCreate
+from models import User, UserCreate, UserUpdate
 from core.security import get_password_hash, verify_password
 
 
@@ -7,6 +7,21 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
     user = User.model_validate(
         user_create, update={"hashed_password": get_password_hash(user_create.password)}
     )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
+
+
+def update_user(*, session: Session, user: User, user_in: UserUpdate) -> User:
+    user_data = user_in.model_dump(exclude_unset=True)
+    extra_data = {}
+    if "password" in user_data:
+        password = user_data["password"]
+        hashed_password = get_password_hash(password)
+        extra_data["password"] = hashed_password
+    
+    user.sqlmodel_update(user_data, update=extra_data)
     session.add(user)
     session.commit()
     session.refresh(user)

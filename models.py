@@ -17,6 +17,11 @@ class UserCreate(UserBase):
     password: str
     full_name: str | None = None
 
+## Optional user properties on patch
+class UserUpdate(UserBase):
+    email: str | None = None
+    password: str | None = None
+
 #----------------------------
 # User table
 class User(UserBase, table=True):
@@ -47,3 +52,7 @@ class TokenPayload(SQLModel):
     sub: int | None = None
 
 #============================
+# Message
+## Generic model for returning message response
+class Message(SQLModel):
+    message: str
