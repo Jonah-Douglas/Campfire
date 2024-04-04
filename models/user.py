@@ -1,10 +1,7 @@
-# JD TODO: Break this class out into a models folder, filled with classes pertaining to the model categories
 from sqlmodel import Field, SQLModel
 
 
-#============================
 # Users
-
 ## Shared user properties
 class UserBase(SQLModel):
     email: str = Field(unique=True, index=True)
@@ -40,22 +37,3 @@ class UserOut(UserBase):
 class UsersOut(SQLModel):
     data: list[UserOut]
     count: int
-
-#============================
-# Tokens
-
-## JSON payload containing the access token
-class Token(SQLModel):
-    access_token: str
-    token_type: str = "bearer"
-
-## JWToken contents
-class TokenPayload(SQLModel):
-    sub: int | None = None
-
-#============================
-# Messages
-
-## Generic model for returning message response
-class Message(SQLModel):
-    message: str

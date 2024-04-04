@@ -7,7 +7,9 @@ from pydantic import ValidationError
 from sqlmodel import Session
 from core.database import engine
 from core.config import settings
-from models import TokenPayload, User
+from models.token import TokenPayload
+from models.user import User
+
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl="/api/v1/login/access-token"

@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from api.dependencies import (
     SessionDependency,
 )
-from models import Token
+from models.token import Token
 from core.config import settings
 from core import security
 import api.routes.utils as utils

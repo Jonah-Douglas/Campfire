@@ -3,14 +3,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import func, select
 from api.dependencies import CurrentUser, get_current_user, SessionDependency
-from models import (
-    Message,
-    User,
-    UserCreate,
-    UserOut,
-    UsersOut,
-    UserUpdate,
-)
+from models.user import User, UserCreate, UserOut, UsersOut, UserUpdate
+from models.message import Message
 from api.routes import utils
 
 

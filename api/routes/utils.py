@@ -1,5 +1,5 @@
 from sqlmodel import Session, select
-from models import User, UserCreate, UserUpdate
+from models.user import User, UserCreate, UserUpdate
 from core.security import get_password_hash, verify_password
 
 
