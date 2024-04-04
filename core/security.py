@@ -6,8 +6,6 @@ from core.config import settings
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
 ALGORITHM = "HS256"
 
 

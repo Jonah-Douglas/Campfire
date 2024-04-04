@@ -95,7 +95,6 @@ def update_user(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="User with this email already exists."
             )
-    
     user = utils.update_user(session=session, user=user, user_in=user_in)
     return user
 
@@ -121,7 +120,6 @@ def delete_user(
             detail="The user doesn't have enough privileges."
         )
     # JD TODO: add check for superuser deleting self once this is added
-
     session.delete(user)
     session.commit()
     return Message(message="User deleted successfully.")
