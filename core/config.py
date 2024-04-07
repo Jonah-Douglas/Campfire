@@ -1,16 +1,21 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    database_hostname: str
-    database_port: str
-    database_password: str
-    database_name: str
-    database_username: str
-    secret_key: str
-    access_token_expire_minutes: int
+    model_config = SettingsConfigDict(
+        env_file=".env", env_ignore_empty=True, extra="ignore"
+    )
+    API_V_STR: str = "/api/v1"
+    SECRET_KEY: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    BACKEND_CORS_ORIGINS: str
 
-    class Config:
-        env_file = ".env"
+    PROJECT_NAME: str
+    POSTGRES_SERVER: str
+    DATABASE_PORT: int = 5432
+    POSTGRES_PASSWORD: str
+    POSTGRES_DB: str
+    POSTGRES_USER: str
+
 
 settings = Settings()

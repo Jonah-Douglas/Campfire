@@ -10,7 +10,7 @@ import models
 # access to the values within the .ini file in use.
 config = context.config
 config.set_main_option("sqlalchemy.url", 
-f'postgresql://{settings.database_username}:{settings.database_password}@{settings.database_hostname}:{settings.database_port}/{settings.database_name}')
+f'postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_SERVER}:{settings.DATABASE_PORT}/{settings.POSTGRES_DB}')
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
