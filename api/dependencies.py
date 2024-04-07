@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from sqlmodel import Session
 from core.database import engine
 from core.config import settings
+from core import security
 from models.token import TokenPayload
 from models.user import User
 
@@ -28,7 +29,7 @@ TokenDependency = Annotated[str, Depends(reusable_oauth2)]
 def get_current_user(session: SessionDependency, token: TokenDependency) -> User:
     try:
         payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.algorithm]
+            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
         token_data = TokenPayload(**payload)
     except (JWTError, ValidationError):

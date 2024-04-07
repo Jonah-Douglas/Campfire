@@ -5,8 +5,14 @@ We are using python's fastAPI backend framework. We are using OpenAPI's Swagger 
 maintaining documentation for the Campfire API. We are utilizing sqlalchemy alongside pydantic for 
 creating our ORM, and database migrations are being performed by Alembic on our PostgreSQL database.
 
-Below are some standards for creating new resources within the API.
+-----------------------------
+# API Resources
 
 -All requests should define a summary and a response_description.
 -All requests that require a body should create an example body with a real world example.
 -API models should be singular (plurals can gets weird, and this guarantees a naming match with the db table)
+
+-----------------------------
+# Env updates
+
+-All setting vars use capitalization (these vars are essentially globals and should be cased as)
