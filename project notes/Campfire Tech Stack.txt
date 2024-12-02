@@ -7,7 +7,7 @@ Payment Integration: Stripe or Google Pay API
 Location Services: Android Location APIs
 Dependency Injection: Dagger Hilt
 Push Notifications: Firebase Cloud Messaging
-Authentication: Firebase Authentication or OAuth2
+Authentication: OAuth2
 
 Backend-----
 Language: Python
