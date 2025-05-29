@@ -18,4 +18,4 @@ campfire_api.add_middleware(
     allow_headers=["*"],
 )
 
-campfire_api.include_router(api_router, prefix="/api/v1")
+campfire_api.include_router(api_router)

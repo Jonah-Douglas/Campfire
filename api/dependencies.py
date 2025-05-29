@@ -13,7 +13,7 @@ from models.user import User
 
 
 reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl="/api/v1/login/access-token"
+    tokenUrl="auth/login"
 )
 
 

@@ -2,7 +2,6 @@ User:
 UserID (int pk not null)
 Name (str First, str Last not null)
 Age (int not null)
-IG/FB Verified (bool not null)
 LocalLocation (string (general loc?) not null)
 NewToArea (bool, maybe change ourselves after 3-6 months, not null)
 Cell # (int nullable (depends on if they want messaging))

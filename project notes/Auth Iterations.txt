@@ -1,0 +1,80 @@
+Phased Authentication and Verification Strategy for Android App (Jetpack Compose/Kotlin)
+
+Building a secure authentication and verification flow is critical for apps facilitating in-person meetups. Hinge's video verification is a strong benchmark, but building it in-house is complex. This document outlines a phased approach for an Android app using Jetpack Compose and Kotlin, starting with an MVP and progressively enhancing security.
+
+-----------------------------------------------------
+
+Phase 1: MVP - Foundational Authentication & ID Check
+
+**Decided against, going to do verification in house so I'm not tied to 3rd party apps from the start
+
+Goal: Launch a functional app quickly with basic login and essential identity verification.
+Authentication:
+Method: Use Firebase Authentication. It's robust, well-documented, scalable, and integrates smoothly with Android/Kotlin/Jetpack Compose.
+Implementation: Standard email/password sign-up/sign-in. Consider adding Google Sign-In for convenience via Firebase.
+Resources: Firebase Authentication for Android Docs, Firebase Codelab for Android with Jetpack Compose.
+Identity Verification:
+Method: Integrate a Third-Party Identity Verification (IDV) / Know Your Customer (KYC) SDK. Fastest way to get serious ID verification initially.
+Providers to Consider (Check Android SDK, Features, Pricing):
+Veriff
+Onfido
+Sumsub
+GetID
+Identomat
+AU10TIX
+IDnow
+Implementation: Choose a provider with a clear Android SDK. Trigger their flow from your app and receive the verification result (pass/fail). Ensure compliance (e.g., GDPR).
+Key Features Needed: ID Document Scan (Passport, Driver's License), Liveness Check (ensures real person).
+
+
+-----------------------------------------------------
+
+
+Phase 2: Enhancing Security with MFA
+
+Goal: Add an extra security layer against account takeover.
+Method: Implement Multi-Factor Authentication (MFA).
+Implementation:
+Firebase Authentication: Natively supports MFA (SMS verification is common). Handle the MFA challenge flow as per Firebase docs.
+Other Services: Auth0, Appwrite also offer MFA SDKs for Android if needed later.
+User Experience: Explain the need for MFA clearly and ensure a smooth process.
+
+
+-----------------------------------------------------
+
+
+Phase 3: Building Towards Advanced Verification
+
+Goal: Lay groundwork for more sophisticated verification, potentially closer to video verification without the full build complexity.
+Methods:
+Profile Richness/Cross-Verification: Encourage linking verified phone numbers, etc.
+Basic In-App Video Snippet: Optional step: record a short video saying a specific phrase or performing an action.
+Manual Review (Interim): Potentially manually review initial video snippets (not scalable long-term).
+Explore Liveness SDKs: Integrate standalone liveness detection SDKs from IDV providers to verify user presence.
+
+
+-----------------------------------------------------
+
+
+Phase 4: In-House Video Verification (The Hinge Model)
+
+Goal: Implement a custom, automated video verification system for maximum trust.
+Understanding Hinge's Approach:
+Process: Video Selfie -> Liveness Check -> 3D Face Authentication (comparing video to profile photos using facial geometry).
+Tech: Machine learning, human moderators, backend processing (e.g., AWS). Sensitive biometric data deleted quickly; screenshots retained for audit.
+Building Your Own:
+Complexity: Substantial engineering effort (Computer Vision, ML, Security, Privacy).
+Technology Needed: Secure video capture, liveness detection algorithms, facial recognition algorithms, secure backend.
+Considerations: Strict data privacy compliance (GDPR, CCPA, BIPA) is crucial for biometrics.
+
+
+-----------------------------------------------------
+
+
+Recommendations Summary:
+
+Start: Firebase Auth + Third-Party KYC/IDV SDK (Phase 1).
+Iterate: Add MFA using Firebase Auth (Phase 2).
+Explore: Consider simpler video snippets or standalone liveness SDKs (Phase 3).
+Long-Term Goal: Carefully plan the complex build of full video verification if resources allow (Phase 4).
+This phased approach enables faster MVP launch with necessary security, providing a clear path to enhance trust and safety features over time.

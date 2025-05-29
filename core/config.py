@@ -6,8 +6,10 @@ class Settings(BaseSettings):
         env_file=".env", env_ignore_empty=True, extra="ignore"
     )
     API_V_STR: str = "/api/v1"
-    SECRET_KEY: str
+    ACCESS_TOKEN_SECRET_KEY: str
+    REFRESH_TOKEN_SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int
     BACKEND_CORS_ORIGINS: str
 
     PROJECT_NAME: str
