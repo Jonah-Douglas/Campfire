@@ -5,11 +5,11 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from pydantic import ValidationError
 from sqlmodel import Session
-from core.database import engine
-from core.config import settings
-from core import security
-from models.token import TokenPayload
-from models.user import User
+from app.core.database import engine
+from app.core.config import settings
+from app.core import security
+from app.models.token import TokenPayload
+from app.models.user import User
 
 
 reusable_oauth2 = OAuth2PasswordBearer(
@@ -29,7 +29,7 @@ TokenDependency = Annotated[str, Depends(reusable_oauth2)]
 def get_current_user(session: SessionDependency, token: TokenDependency) -> User:
     try:
         payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+            token, settings.ACCESS_TOKEN_SECRET_KEY, algorithms=[security.ALGORITHM]
         )
         token_data = TokenPayload(**payload)
     except (JWTError, ValidationError):
