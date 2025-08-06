@@ -49,11 +49,3 @@ Possible filters-
 Example:
 click on Mountain Biking card ->
 -all results appear that are closest upcoming mountain biking events
-
-
-
-
-
-
-
-

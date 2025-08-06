@@ -1,80 +1,103 @@
 Phased Authentication and Verification Strategy for Android App (Jetpack Compose/Kotlin)
 
-Building a secure authentication and verification flow is critical for apps facilitating in-person meetups. Hinge's video verification is a strong benchmark, but building it in-house is complex. This document outlines a phased approach for an Android app using Jetpack Compose and Kotlin, starting with an MVP and progressively enhancing security.
+-----------------------------------------------------
+
+Phase 1: MVP - Core Authentication & Initial Verification (CURRENT IMPLEMENTATION)
+
+Goal: Establish a secure foundation for user authentication and provide an initial layer of user verification.
+
+Current Implementation:
+
+*   Authentication Method: Phone Number + One-Time Passwords (OTPs)
+    *   Process: Users register and log in using their phone number. An OTP is sent via SMS to verify possession of the phone number.
+    *   Technology (Backend): Custom backend logic for OTP generation, delivery (via an SMS gateway service), and validation.
+    *   Technology (Android - Jetpack Compose/Kotlin): UI for phone number input, OTP entry. API calls to the backend for OTP requests and verification. Consider using Google's SMS Retriever API for a smoother OTP autofill experience.
+
+*   Verification Process: OAuth2-based Session Management
+    *   Process: Upon successful OTP validation, the backend issues OAuth2 tokens (Access Token and Refresh Token). These tokens are used to authenticate subsequent API requests from the Android app, verifying the user's session.
+    *   Technology (Backend): FastAPI backend implementing OAuth2 Password Bearer Flow (conceptually, with OTP acting as the "password" in this initial phase). Secure JWT generation and validation.
+    *   Technology (Android): Secure storage of tokens (e.g., Android Keystore for Refresh Token, in-memory or encrypted SharedPreferences for Access Token). Logic to include Access Tokens in API request headers and handle token refresh.
+
+*   User Experience:
+    *   Clear communication during sign-up about phone number usage for verification.
+    *   Smooth OTP entry, ideally with autofill capabilities.
 
 -----------------------------------------------------
 
-Phase 1: MVP - Foundational Authentication & ID Check
+Phase 2: Enhancing Account Security with Multi-Factor Authentication (MFA) Options (FUTURE ENHANCEMENT)
 
-**Decided against, going to do verification in house so I'm not tied to 3rd party apps from the start
+Goal: Add an optional, stronger layer of security against account takeover for users who opt-in or for high-risk actions.
 
-Goal: Launch a functional app quickly with basic login and essential identity verification.
-Authentication:
-Method: Use Firebase Authentication. It's robust, well-documented, scalable, and integrates smoothly with Android/Kotlin/Jetpack Compose.
-Implementation: Standard email/password sign-up/sign-in. Consider adding Google Sign-In for convenience via Firebase.
-Resources: Firebase Authentication for Android Docs, Firebase Codelab for Android with Jetpack Compose.
-Identity Verification:
-Method: Integrate a Third-Party Identity Verification (IDV) / Know Your Customer (KYC) SDK. Fastest way to get serious ID verification initially.
-Providers to Consider (Check Android SDK, Features, Pricing):
-Veriff
-Onfido
-Sumsub
-GetID
-Identomat
-AU10TIX
-IDnow
-Implementation: Choose a provider with a clear Android SDK. Trigger their flow from your app and receive the verification result (pass/fail). Ensure compliance (e.g., GDPR).
-Key Features Needed: ID Document Scan (Passport, Driver's License), Liveness Check (ensures real person).
+Proposed Methods (To be evaluated based on user needs and backend capabilities):
 
+*   Authenticator App (TOTP):
+    *   Implementation: Allow users to link an authenticator app (like Google Authenticator, Authy) for Time-based One-Time Passwords (TOTP) as a second factor.
+    *   Backend: Would require implementing TOTP generation, storage of shared secrets, and validation logic.
+
+*   Biometric Authentication (as a second factor on trusted devices):
+    *   Implementation (Android): Utilize Android's BiometricPrompt API to allow users to use fingerprint or face unlock as a second factor for login or critical actions *after* initial OTP/password authentication.
+    *   Backend: The backend would need to trust the client's assertion of successful biometric validation for specific flows, typically by issuing a short-lived, biometric-verified session token or by requiring it alongside the primary session token for certain operations.
+
+*   User Experience:
+    *   Clearly explain the benefits of enabling MFA.
+    *   Provide easy setup and recovery options.
 
 -----------------------------------------------------
 
+Phase 3: Building Towards Stronger User Identity Verification (FUTURE ENHANCEMENT)
 
-Phase 2: Enhancing Security with MFA
+Goal: Introduce more robust methods to verify user identity beyond phone number possession, increasing trust and safety on the platform.
 
-Goal: Add an extra security layer against account takeover.
-Method: Implement Multi-Factor Authentication (MFA).
-Implementation:
-Firebase Authentication: Natively supports MFA (SMS verification is common). Handle the MFA challenge flow as per Firebase docs.
-Other Services: Auth0, Appwrite also offer MFA SDKs for Android if needed later.
-User Experience: Explain the need for MFA clearly and ensure a smooth process.
+Proposed Methods (To be explored and implemented progressively):
 
+*   Profile Richness & Cross-Verification (Data Points):
+    *   Encourage users to complete their profiles with more information.
+    *   Consider allowing optional linking to other verified platforms (e.g., social media profiles, if done with privacy considerations) – this is more about plausibility than hard verification.
 
------------------------------------------------------
+*   Basic In-App Liveness Check / "Say Phrase" Video Snippet:
+    *   Process: As an optional verification step, users could record a short video of themselves performing a simple action (e.g., turning their head, saying a randomly generated phrase displayed on screen).
+    *   Technology (Android): CameraX for video capture.
+    *   Technology (Backend): Secure storage for the snippets. Initial implementation might involve manual review by a small, trusted team (acknowledging this isn't scalable long-term but can be a learning phase).
+    *   Considerations: This is a step towards liveness detection but without full automation initially. User consent and clear communication are paramount.
 
-
-Phase 3: Building Towards Advanced Verification
-
-Goal: Lay groundwork for more sophisticated verification, potentially closer to video verification without the full build complexity.
-Methods:
-Profile Richness/Cross-Verification: Encourage linking verified phone numbers, etc.
-Basic In-App Video Snippet: Optional step: record a short video saying a specific phrase or performing an action.
-Manual Review (Interim): Potentially manually review initial video snippets (not scalable long-term).
-Explore Liveness SDKs: Integrate standalone liveness detection SDKs from IDV providers to verify user presence.
-
+*   Exploring Third-Party Liveness Detection SDKs:
+    *   Process: Integrate standalone, lightweight liveness detection SDKs from identity verification (IDV) providers. These SDKs can confirm a user is a live person performing the capture, helping to prevent spoofing with static images or pre-recorded videos.
+    *   Considerations: Evaluate SDKs for ease of integration, cost, accuracy, and user experience.
 
 -----------------------------------------------------
 
+Phase 4: Advanced In-House Video Verification (LONG-TERM GOAL - The "Hinge Model")
 
-Phase 4: In-House Video Verification (The Hinge Model)
+Goal: Implement a custom, potentially automated, video verification system for the highest level of trust and safety, tailored to the app's specific needs.
 
-Goal: Implement a custom, automated video verification system for maximum trust.
-Understanding Hinge's Approach:
-Process: Video Selfie -> Liveness Check -> 3D Face Authentication (comparing video to profile photos using facial geometry).
-Tech: Machine learning, human moderators, backend processing (e.g., AWS). Sensitive biometric data deleted quickly; screenshots retained for audit.
-Building Your Own:
-Complexity: Substantial engineering effort (Computer Vision, ML, Security, Privacy).
-Technology Needed: Secure video capture, liveness detection algorithms, facial recognition algorithms, secure backend.
-Considerations: Strict data privacy compliance (GDPR, CCPA, BIPA) is crucial for biometrics.
+Understanding the Benchmark (e.g., Hinge):
+*   Process Often Involves: User submits a video selfie performing specific actions -> Automated Liveness Check -> Potential 3D Face Authentication (comparing video features to uploaded profile photos using facial geometry analysis).
+*   Technology Stack: Often involves Machine Learning (Computer Vision for liveness, facial recognition), robust backend processing, and potentially human review for edge cases. Secure handling of biometric data is critical.
 
+Building Your Own (Significant Undertaking):
+*   Complexity: This is a substantial engineering effort requiring specialized expertise in Computer Vision, Machine Learning, backend infrastructure, security, and data privacy.
+*   Key Components:
+    *   Android: Secure and guided video capture flow.
+    *   Backend: Liveness detection algorithms (either built or licensed), facial feature extraction, comparison algorithms, secure and ephemeral storage for biometric data during processing.
+*   Critical Considerations:
+    *   Data Privacy & Compliance: Strict adherence to global data privacy regulations (GDPR, CCPA, BIPA, etc.) is non-negotiable for biometric data. This includes clear consent, data minimization, purpose limitation, and secure deletion policies.
+    *   Accuracy & Bias: ML models must be rigorously tested for accuracy across diverse demographics to avoid bias.
+    *   Scalability & Cost: Both infrastructure and potential human review components need to be scalable.
 
 -----------------------------------------------------
 
+Summary & Recommendations:
 
-Recommendations Summary:
+1.  Current Foundation (Phase 1 - Implemented):
+    *   Phone OTPs for primary authentication.
+    *   OAuth2 for session verification and API access control.
+    *   Continue to ensure this foundation is robust and secure.
 
-Start: Firebase Auth + Third-Party KYC/IDV SDK (Phase 1).
-Iterate: Add MFA using Firebase Auth (Phase 2).
-Explore: Consider simpler video snippets or standalone liveness SDKs (Phase 3).
-Long-Term Goal: Carefully plan the complex build of full video verification if resources allow (Phase 4).
-This phased approach enables faster MVP launch with necessary security, providing a clear path to enhance trust and safety features over time.
+2.  Next Steps - Enhance Account Security (Phase 2):
+    *   Plan and implement one or more MFA options (e.g., Authenticator App TOTP) to provide users with enhanced account protection.
+
+3.  Iterate - Improve Identity Verification (Phase 3):
+    *   Begin exploring and implementing stronger identity verification methods. A basic in-app "say phrase" video snippet (with initial manual review) or integrating a third-party liveness SDK could be good starting points.
+
+4.  Long-Term Vision - Advanced Verification (Phase 4):
+    *   Keep in-house, advanced video verification as a long-term strategic goal. This will require significant planning, resource allocation, and expertise when the time comes.

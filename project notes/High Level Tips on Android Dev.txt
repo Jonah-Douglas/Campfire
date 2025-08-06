@@ -1,4 +1,0 @@
-High Level Tips on Android Dev:
-Retrofit is the most popular and known Client side HTTP library for native android dev 
-	-KTOR is up and coming and is said to be faster, also works with projects that are KMM
-Dagger is a good DI library, but Hilt is not much slower and improves upon Dagger several times over, reducing dev time significantly

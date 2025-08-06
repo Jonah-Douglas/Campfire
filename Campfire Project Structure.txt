@@ -1,8 +1,0 @@
-Campfire
--Auth
--Home Feed
--User Profile
--Settings
--Create/Update/Delete Event
--Friends
--Messaging

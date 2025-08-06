@@ -1,32 +1,49 @@
-Frontend (Android)-----
-Language: Kotlin
-UI Framework: Jetpack Compose
-Networking: Retrofit or Volley
-Database: Room Persistence Library
-Payment Integration: Stripe or Google Pay API
-Location Services: Android Location APIs
-Dependency Injection: Dagger Hilt
-Push Notifications: Firebase Cloud Messaging
-Authentication: OAuth2
+Campfire Tech Stack - Current Expectations
 
-Backend-----
-Language: Python
-Framework: FastAPI
-Database: MongoDB or PostgreSQL
-Authentication: JSON Web Tokens (JWT)
-Real-time Communication: WebSocket (with additional library such as Socket.IO or FastAPI WebSocket for real-time messaging functionality)
-Geolocation Services: Google Maps Platform or Mapbox
-Payment Gateway Integration: Stripe API
-Containerization: Docker
-Deployment: Kubernetes or AWS Elastic Beanstalk
-Scalability: AWS Lambda or Google Cloud Functions
-Monitoring: Prometheus and Grafana
+-----------------------------------------------------
 
-Infrastructure-----
-Cloud Provider: Amazon Web Services (AWS) or Google Cloud Platform (GCP)
-Storage: Amazon S3 or Google Cloud Storage
-Database Hosting: MongoDB Atlas or Amazon RDS
-CI/CD: Jenkins or GitLab CI/CD
-Version Control: Git
+**Frontend (Android)**
+*   Language: KotlinUI Framework: Jetpack Compose
+*   Architecture: MVVM (ViewModel, LiveData/StateFlow)
+*   Networking: Retrofit (with OkHttp, JSON converter)
+*   Asynchronous Operations: Kotlin Coroutines & Flow
+*   Local Database: Room
+*   Dependency Injection: Hilt
+*   Navigation: Jetpack Navigation Compose
+*   Authentication Handling: Secure OAuth2 token management
+*   Location Services: Android Location APIs
+*   Push Notifications: Firebase Cloud Messaging
+*   Payment Integration: Stripe or Google Pay API (TBD)
 
-This tech stack provides a comprehensive solution for building a feature-rich Android application with messaging, post CRUD operations, payments, and location-based services, along with a FastAPI backend that can be reused for web and iOS apps in the future.
+---
+
+**Backend**
+*   Language: Python (3.10+)
+*   Framework: FastAPI
+*   Database: PostgreSQL
+*   ORM/Database Toolkit: SQLAlchemy
+*   Database Migrations: Alembic
+*   Authentication:
+    *   OAuth2 (custom OTP-based flow)
+    *   Tokens: JSON Web Tokens (JWT)
+*   Asynchronous Task Queues (Future): Celery (with Redis/RabbitMQ)
+*   Real-time Communication (Future): FastAPI WebSockets
+*   Geolocation Services (Future):
+    *   Database Extension: PostGIS for PostgreSQL
+*   Payment Gateway Integration (Future): Stripe API
+*   Containerization: Docker (Docker Compose for local dev)
+*   Testing: Pytest
+*   Initial Deployment: Docker-based
+*   Scalability/Deployment (Future): Kubernetes, AWS Elastic Beanstalk
+*   Monitoring (Future): Logging (initially), Prometheus/Grafana, Cloud-native solutions
+
+---
+
+**Infrastructure**
+*   Cloud Provider: AWS or GCP (To be finalized)
+*   Version Control: Git
+*   Storage (User Content): Amazon S3 or Google Cloud Storage
+*   Database Hosting (PostgreSQL): Amazon RDS, Google Cloud SQL
+*   CI/CD: GitHub Actions, GitLab CI/CD
+*   Caching (Future): Redis or Memcached
+*   Logging (Future): Centralized (ELK, CloudWatch Logs, Google Cloud Logging)

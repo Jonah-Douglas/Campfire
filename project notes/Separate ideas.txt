@@ -1,4 +1,7 @@
-Separate ideas:
-Send an email to the user when they confirm on an event?
-Populate their calendar app with the date agreed on?
-Out of skill range events maybe greyed out on searches
+Various High-Level Ideas
+
+-----------------------------------------------------
+
+-Send an email to the user when they confirm on an event?
+-Populate their calendar app with the date agreed on?
+-Out of skill range events maybe greyed out on searches

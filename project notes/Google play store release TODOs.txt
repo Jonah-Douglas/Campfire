@@ -1,3 +1,0 @@
-DELETE THIS FILE AFTER GOING THROUGH THIS LIST
-
--Look over the backup_rules.xml and data_extraction_rues.xml in the res directory (might be able to remove backup_rules_

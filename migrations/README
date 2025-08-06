@@ -1,1 +1,24 @@
-Generic single-database configuration.
+# Alembic Database Migrations for Campfire
+
+This directory contains database migration scripts managed by Alembic. These scripts allow for evolving the database schema in a consistent and version-controlled manner.
+
+This setup is configured for a **single-database** environment.
+
+## Directory Structure
+
+*   `env.py`: This is the main configuration script for Alembic. It's run whenever an Alembic command is invoked. It sets up the database connection and the context for running migrations.
+*   `script.py.mako`: This is a Mako template used by Alembic to generate new migration script files.
+*   `versions/`: This directory contains all the individual migration script files. Each file represents a specific change (or set of changes) to the database schema and is versioned.
+*   `README`: This file (you are reading it).
+
+## Key Configuration Files (Outside this directory)
+
+*   `alembic.ini`: Located in the project root (or as configured). This file contains general Alembic settings, including the database connection URL (`sqlalchemy.url`).
+*   `pyproject.toml` (Optional): If used, Alembic configuration can also be partially stored here under `[tool.alembic]`.
+
+## Common Alembic Commands
+
+All commands should typically be run from the **project root directory** (where `alembic.ini` is located), assuming your environment is activated if you use one.
+
+1.  **Generating a New Migration Script (Autogenerate):**
+    Alembic can compare your SQLAlchemy models against the current database schema and automatically generate a candidate migration script.

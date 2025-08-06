@@ -1,0 +1,59 @@
+FastAPI Project Structure:
+
+-----------------------------------------------------
+
+project_root/
+├── app/
+│   ├── auth/                     # Feature: Authentication
+│   │   ├── api/                  # FastAPI Routes for auth
+│   │   │   └── routes/
+│   │   │       └── ...
+│   │   ├── enums/                # FastAPI Enums for auth
+│   │       └── ...
+│   │   ├── models/               # FastAPI Models for auth
+│   │       └── ...
+│   │   ├── repositories/         # FastAPI DL for auth
+│   │       └── ...
+│   │   ├── schema/               # FastAPI Schema for auth
+│   │       └── ...
+│   │   ├── services/             # FastAPI BL for auth
+│   │       └── ...
+│   │   ├── constants.py          # Pydantic Constants for auth
+│   │   ├── dependencies.py       # Pydantic Dependencies for auth
+│   │   └── validators.py         # Pydantic Validators for auth
+│   │
+│   ├── core/                     # Feature: Core
+│   ├── event/                    # Feature: Event
+│   ├── messaging/                # Feature: Messaging
+│   ├── users/                    # Feature: Users
+│   │
+│   # ... other feature folders as needed ...
+│   │
+│   ├── core/                     # SHARED: Global configuration and security utilities
+│   │   ├── config.py             # Application settings
+│   │   ├── dependencies.py       # Common dependencies
+│   │   ├── logging_config.py     # Logger settings and wrapper
+│   │   ├── security.py           # Password hashing, JWT utilities, etc.
+│   │   └── validators.py         # Common validation
+│   │
+│   ├── db/                       # SHARED: Database setup and base definitions
+│   │   ├── base_class.py         # Defines `Base = declarative_base()` for all models
+│   │   └── session.py            # Engine, SessionLocal, get_db dependency
+│   │
+│   └── main.py                   # SHARED: Main FastAPI application instance,
+│                                 #         includes routers from all feature.api submodules
+│
+├── migrations/                   # Alembic migrations (manages all models that use app.db.base.Base)
+│   └── versions/
+├── tests/                        # Top-level tests directory, mirrors app structure
+│   ├── auth/
+│   │   └── ...
+│   └── users/
+│       └── ...
+│   └── conftest.py
+│
+├── .env
+├── .gitignore
+├── README.md
+├── requirements.in
+└── requirements.txt

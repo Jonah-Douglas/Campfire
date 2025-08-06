@@ -1,0 +1,51 @@
+    {
+        // --- Python Interpreter ---
+        // For Windows:
+        "python.defaultInterpreterPath": ".venv\\Scripts\\python.exe",
+
+        // --- Ruff Linter and Formatter Integration ---
+        "[python]": {
+            // Set Ruff as the default formatter for Python files.
+            "editor.defaultFormatter": "charliermarsh.ruff", // The ID of the Ruff VS Code extension
+
+            // Enable format on save for Python files.
+            "editor.formatOnSave": true,
+
+            // Enable Ruff's code actions (like "fix all" and "organize imports") on save.
+            "editor.codeActionsOnSave": {
+                "source.fixAll": "explicit",        // Corresponds to `ruff check --fix`
+                "source.organizeImports": "explicit" // Corresponds to `ruff check --select I --fix` or `ruff format` (if formatting imports)
+            }
+        },
+        "ruff.enable": true, // Ensure the Ruff extension is generally enabled (usually default)
+
+        // --- General Editor Settings (Good Practices) ---
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+        "files.trimFinalNewlines": true,
+        "editor.rulers": [
+            88 // Set to your line-length from pyproject.toml's [tool.ruff]
+        ],
+        "editor.tabSize": 4, // Common Python standard
+        "editor.detectIndentation": false, // Use spaces, not tabs, for indentation
+
+        // --- Pylance Language Server Settings (Recommended) ---
+        "python.languageServer": "Pylance", // Pylance offers great features like type checking, autocompletion
+        "python.analysis.typeCheckingMode": "basic", // Or "strict" if you are rigorous with type hints
+        "python.analysis.diagnosticMode": "workspace", // Analyzes all files in the workspace
+
+        // --- Tell VS Code to hide common Python artifacts from the explorer ---
+        "files.exclude": {
+            "**/.git": true,
+            "**/.svn": true,
+            "**/.hg": true,
+            "**/CVS": true,
+            "**/.DS_Store": true,
+            "**/Thumbs.db": true,
+            "**/.venv": false, // Keep .venv visible if you like, or true to hide
+            "**/.pytest_cache": true,
+            "**/.ruff_cache": true,
+            "**/__pycache__": true,
+            "**/*.pyc": true
+        }
+    }

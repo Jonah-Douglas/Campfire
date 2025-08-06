@@ -1,0 +1,146 @@
+Project API Standards
+
+-----------------------------------------------------
+
+This document outlines the standards and conventions for designing, developing, and maintaining APIs for this project. Adherence to these standards ensures consistency, maintainability, and ease of use.
+
+**1. Naming Conventions**
+
+*   **Endpoints (Paths):**
+    *   Use `kebab-case` (all lowercase with hyphens for separation).
+    *   Plural nouns for resource collections (e.g., `/users`, `/events`).
+    *   Specific resource identifiers as path parameters (e.g., `/users/{user_id}`).
+    *   Actions that don't map to CRUD can be verbs or nouns (e.g., `/auth/verify-otp`, `/users/me/settings`).
+*   **Path Parameters:**
+    *   Use `snake_case` (e.g., `{user_id}`, `{event_id}`).
+*   **Query Parameters:**
+    *   Use `snake_case` (e.g., `?page=1&page_size=20&sort_by=created_at`).
+*   **JSON Request/Response Body Keys:**
+    *   Use `snake_case` (e.g., `"display_name": "John Doe"`, `"event_title": "Team Meeting"`).
+*   **Python Code (Variables, Function Names, Arguments):**
+    *   Use `snake_case` (e.g., `current_user`, `get_all_items`).
+*   **Python Code (Class Names, Pydantic Models, SQLAlchemy Models):**
+    *   Use `PascalCase` (e.g., `User`, `EventCreate`, `UserInDB`).
+*   **File Names (Python modules):**
+    *   Use `snake_case` (e.g., `models_user.py`, `services_event.py`).
+*   **Directory/Package Names:**
+    *   Use `snake_case` (e.g., `app/users/`, `app/core/`).
+
+**2. HTTP Methods**
+
+*   **GET:** Retrieve resources. Should be safe and idempotent.
+*   **POST:** Create new resources or trigger actions that are not idempotent.
+*   **PUT:** Update/Replace an existing resource completely. Should be idempotent.
+*   **PATCH:** Partially update an existing resource. Should be idempotent. (Consider using if full replacement is not desired).
+*   **DELETE:** Remove an existing resource. Should be idempotent.
+
+**3. API Versioning**
+
+*   All API endpoints will be versioned using a path prefix.
+*   Current version: `/api/v1` (e.g., `/api/v1/users`).
+*   The version string should be configurable (e.g., via `settings.API_V_STR`).
+
+**4. Request and Response Formats**
+
+*   **Data Format:** JSON (`application/json`) will be the exclusive data format for request and response bodies.
+*   **Pydantic Models:**
+    *   All request and response bodies MUST be defined and validated using Pydantic models.
+    *   Use clear and descriptive model names (e.g., `UserCreate`, `UserRead`, `UserUpdate`, `ItemResponse`).
+    *   Provide example values in Pydantic schemas for documentation.
+*   **Date and Time:**
+    *   Use ISO 8601 format for all date and time fields in requests and responses (e.g., `YYYY-MM-DDTHH:MM:SSZ` or `YYYY-MM-DDTHH:MM:SS.ffffff+HH:MM`).
+    *   Store and process dates/times in UTC on the backend whenever possible. Timezone information should be included if necessary.
+
+**5. Authentication and Authorization**
+
+*   **Authentication Scheme:** OAuth2 with Password Bearer flow (using JWTs for access and refresh tokens).
+    *   Access Token: Short-lived, used for accessing protected resources.
+    *   Refresh Token: Long-lived, used to obtain new access tokens. Stored securely by the client and in the database (hashed or encrypted if necessary for denylisting).
+*   **Token Endpoint:** `/api/v1/auth/login` (or similar for OTP verification leading to token issuance).
+*   **Refresh Endpoint:** `/api/v1/auth/refresh-token`.
+*   **Logout Endpoint:** `/api/v1/auth/logout` (should invalidate the provided refresh token).
+*   **Authorization Header:** `Authorization: Bearer <access_token>`.
+*   **Protected Routes:** Use FastAPI's `Depends` with `get_current_user` for routes requiring authentication.
+*   **Permissions:** Implement role-based or permission-based authorization logic within services or route dependencies as needed.
+
+**6. Status Codes and Error Handling**
+
+*   **Successful Responses:**
+    *   `200 OK`: General success for GET, PUT, PATCH.
+    *   `201 Created`: Resource successfully created (POST). Include a `Location` header if applicable.
+    *   `204 No Content`: Request successful, no content to return (e.g., DELETE, successful logout).
+*   **Client Errors (4xx):**
+    *   `400 Bad Request`: General client-side error (e.g., invalid JSON, malformed request).
+    *   `401 Unauthorized`: Authentication is required and has failed or has not yet been provided. Include `WWW-Authenticate: Bearer` header.
+    *   `403 Forbidden`: Authenticated user does not have permission to access the resource.
+    *   `404 Not Found`: Requested resource does not exist.
+    *   `409 Conflict`: Request conflicts with the current state of the server (e.g., creating a resource that already exists with a unique constraint).
+    *   `422 Unprocessable Entity`: The request was well-formed but was unable to be followed due to semantic errors (typically used by FastAPI for Pydantic validation errors).
+*   **Server Errors (5xx):**
+    *   `500 Internal Server Error`: Generic server-side error. Avoid exposing detailed error messages to the client in production.
+    *   `503 Service Unavailable`: Server is temporarily unable to handle the request (e.g., downstream service down, SMS service unavailable).
+*   **Error Response Body:**
+    *   For 4xx and 5xx errors, return a JSON object with a `detail` key containing a human-readable error message or a more structured error object.
+    *   Example: `{"detail": "Invalid OTP code provided."}`
+    *   Example for validation errors (FastAPI default): `{"detail": [{"loc": ["body", "email"], "msg": "value is not a valid email address", "type": "value_error.email"}]}`
+
+**7. Pagination and Filtering**
+
+*   **Pagination:**
+    *   Use query parameters for pagination: `page` (or `offset`) and `page_size` (or `limit`).
+    *   Default `page_size` should be reasonable (e.g., 20 or 50).
+    *   Consider returning pagination metadata in the response (e.g., `total_items`, `total_pages`, `current_page`, `next_page_url`, `prev_page_url`).
+*   **Filtering:**
+    *   Use specific query parameters for filtering resources (e.g., `/events?status=active&created_by={user_id}`).
+*   **Sorting:**
+    *   Use a `sort_by` query parameter (e.g., `sort_by=created_at` or `sort_by=-created_at` for descending).
+
+**8. Rate Limiting**
+
+*   Implement rate limiting on sensitive endpoints (e.g., login, OTP requests) to prevent abuse.
+*   (Implementation detail: e.g., using `slowapi` or a middleware).
+
+**9. Logging**
+
+*   Log important events, errors, and requests.
+*   Include contextual information like user ID (if available), request path, method, and response status.
+*   Sensitive information (passwords, tokens) should NOT be logged in plain text.
+
+**10. Documentation**
+
+*   FastAPI's automatic OpenAPI (Swagger UI at `/docs`, ReDoc at `/redoc`) documentation is the primary source of API documentation.
+*   Ensure Pydantic models have clear descriptions and examples.
+*   Use `summary` and `description` parameters in path operation functions for clarity.
+*   Document custom headers, authentication methods, and error responses.
+
+**11. Security Considerations**
+
+*   **HTTPS:** All API traffic MUST be served over HTTPS in production.
+*   **Input Validation:** Strictly validate all incoming data using Pydantic.
+*   **Output Encoding:** Ensure proper output encoding to prevent XSS (FastAPI handles this well with Pydantic).
+*   **SQL Injection:** Use an ORM (SQLAlchemy) with parameterized queries to prevent SQL injection. Avoid raw SQL queries with unvalidated input.
+*   **CSRF Protection:** While less critical for token-based APIs not using cookies for session management, be mindful if any part of the auth flow involves browser forms and cookies.
+*   **Secrets Management:** Store secrets (API keys, database passwords, JWT secrets) securely (e.g., environment variables, secrets manager), not in version control. Use `app.core.config.Settings`.
+*   **Dependency Security:** Regularly update dependencies to patch known vulnerabilities.
+
+**12. Code Structure (as discussed)**
+
+*   Organize code by features (e.g., `app/users/`, `app/events/`).
+*   Within each feature, further divide by concern (e.g., `api/`, `services/`, `models/`, `schemas/`, `dependencies_feature.py`).
+*   Core utilities and configurations in `app/core/`.
+*   Database setup in `app/db/`.
+
+**13. Testing**
+
+*   Write unit tests for services and utility functions.
+*   Write integration tests for API endpoints.
+*   Aim for good test coverage.
+*   Use a testing framework like `pytest`.
+
+**14. Environment Variables**
+
+*   All configurable parameters (database URLs, secret keys, external service URLs/keys) should be managed via environment variables and loaded through `app.core.config.Settings`.
+
+---
+
+This document is a living document and should be updated as the API evolves.

@@ -1,0 +1,102 @@
+[project]
+name = "app"
+version = "0.1.0"
+description = "Campfire API is a backend service for an event aggregation and exploration application. The primary goal is to help users discover events, connect with others based on shared event interests, and facilitate communication around those events."
+authors = [
+    {name = "jonah",email = "jonah.douglas23@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi (>=0.116.1,<0.117.0)",
+    "uvicorn[standard] (>=0.35.0,<0.36.0)",
+    "sqlalchemy (>=2.0.42,<3.0.0)",
+    "alembic (>=1.16.4,<2.0.0)",
+    "psycopg2 (>=2.9.10,<3.0.0)",
+    "inflection (>=0.5.1,<0.6.0)",
+    "python-jose[cryptography] (>=3.5.0,<4.0.0)",
+    "passlib[bcrypt] (>=1.7.4,<2.0.0)",
+    "email-validator (>=2.2.0,<3.0.0)",
+    "pydantic (>=2.11.7,<3.0.0)",
+    "pydantic-settings (>=2.10.1,<3.0.0)",
+    "pydantic-extra-types (>=2.10.5,<3.0.0)",
+    "twilio (>=9.7.0,<10.0.0)",
+    "python-dotenv (>=1.1.1,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=1.5.0"]
+build-backend = "poetry.core.masonry.api"
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.12.7"
+mypy = "^1.0"
+
+[tool.ruff]
+line-length = 88 # Or 79, or your preference
+target-version = "py313" # Match your project's requires-python
+
+lint.select = [
+    "E", "W", "F", "I", "UP", "B", # Good starting set
+    # Consider adding more as you get comfortable:
+    "C90",  # Complexity checks
+    "RUF",  # Ruff specific lints
+    "S",    # flake8-bandit (security checks, can be noisy initially)
+    "ANN",  # flake8-annotations (if you use type hints extensively)
+    "N",    # pep8-naming
+    "SIM",  # flake8-simplify
+    # "T20",  # flake8-print (flags print statements, useful for backend apps)
+]
+
+lint.ignore = [
+    "E501",  # Line too long (Ruff's formatter or Black can handle this)
+    "E203",  # Whitespace before ':', conflicts with Black if you also use Black
+    # "ANN101", # Missing type annotation for self (can be noisy if not fully typed)
+    # "ANN102", # Missing type annotation for cls
+    # "B008", # Do not perform function calls in argument defaults (can be opinionated)
+    # "S101", # Assert (for tests this is fine, but bandit flags it)
+]
+
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",      # Common name for Poetry's in-project venv
+    "venv",       # Another common name
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "*/migrations/*", # Alembic migrations
+    "docs/conf.py",
+]
+
+# Allow unused variables if they are underscore-prefixed.
+lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+force-sort-within-sections = true
+combine-as-imports = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
