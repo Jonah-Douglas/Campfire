@@ -7,7 +7,7 @@ from jose import JWTError, jwt
 
 from app.core.config import settings
 from app.core.constants import SecurityConstants
-from app.core.logging_config import firelog
+from app.core.logging.logger_wrapper import firelog
 
 
 class TokenCreationError(Exception):

@@ -13,7 +13,7 @@ from app.auth.services.auth_service import AuthService
 from app.core.config import settings
 from app.core.constants.security import SecurityConstants
 from app.core.dependencies import CurrentSMSService
-from app.core.logging_config import firelog
+from app.core.logging.logger_wrapper import firelog
 from app.db.session import SessionDependency
 from app.users.models.user_model import User
 from app.users.repositories.user_repository import UserRepository

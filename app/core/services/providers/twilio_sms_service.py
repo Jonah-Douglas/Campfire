@@ -7,7 +7,7 @@ from twilio.rest.api.v2010.account.message import MessageInstance
 
 from app.core.config import settings
 from app.core.constants import TwilioServiceConstants
-from app.core.logging_config import firelog
+from app.core.logging.logger_wrapper import firelog
 from app.core.services.interfaces.sms_service_interface import (
     ConfigurationError,
     InsufficientCreditsError,

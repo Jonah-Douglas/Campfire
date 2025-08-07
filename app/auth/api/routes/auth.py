@@ -11,7 +11,7 @@ from app.auth.schemas.otp_schema import OTPData
 from app.auth.schemas.pending_otp_schema import OTPRequestPayload, OTPVerifyPayload
 from app.auth.schemas.token_schema import RefreshTokenRequest, Token
 from app.auth.services.auth_service import AuthService
-from app.core.logging_config import firelog
+from app.core.logging.logger_wrapper import firelog
 from app.core.schemas.response_schemas import GenericAPIResponse
 from app.db.session import SessionDependency
 from app.users.models.user_model import User

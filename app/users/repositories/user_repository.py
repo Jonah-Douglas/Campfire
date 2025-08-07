@@ -5,7 +5,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
 from app.core.constants.repository_outcomes import GeneralLogs
-from app.core.logging_config import firelog
+from app.core.logging.logger_wrapper import firelog
 from app.core.repositories.base_repository import BaseRepository
 from app.users.constants import UserModelConstants, UserRepoMessages
 from app.users.models.user_model import User

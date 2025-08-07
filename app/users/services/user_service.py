@@ -4,9 +4,9 @@ from fastapi import status
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
-from app.core.enums.log_level import LogLevel
+from app.core.enums.log_levels import LogLevel
 from app.core.exceptions import log_and_raise_http_exception
-from app.core.logging_config import firelog
+from app.core.logging.logger_wrapper import firelog
 from app.core.services.base_service import BaseService
 from app.users.constants import (
     UserHttpErrorDetails,

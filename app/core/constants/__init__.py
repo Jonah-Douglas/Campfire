@@ -1,5 +1,5 @@
 from .general import GeneralMessages
-from .logging_strings import LoggingStrings
+from .logging import LoggingStrings
 from .repository_outcomes import GeneralLogs
 from .security import SecurityConstants
 from .twilio import TwilioServiceConstants

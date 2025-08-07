@@ -19,7 +19,7 @@ from app.core import security
 from app.core.config import settings
 from app.core.constants.security import SecurityConstants
 from app.core.dependencies import get_sms_service
-from app.core.logging_config import firelog
+from app.core.logging.logger_wrapper import firelog
 from app.core.services.interfaces.sms_service_interface import SMSServiceInterface
 from app.users.repositories.user_repository import UserRepository
 

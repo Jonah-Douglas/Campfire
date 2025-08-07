@@ -7,7 +7,7 @@ from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.constants import LoggingStrings
-from app.core.logging_config import firelog
+from app.core.logging.logger_wrapper import firelog
 from app.db.base_class import Base
 
 _ModelType = TypeVar("_ModelType", bound=Base)  # Type of the SQLAlchemy model

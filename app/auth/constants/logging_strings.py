@@ -5,7 +5,7 @@ class AuthLoggingStrings:
     OTP_SENT_IN_DEV_MODE = (
         "OTP sent (dev mode) for {phone_prefix}. Debug OTP: {debug_otp_value}"
     )
-    OTP_SENT_IN_PRODUCTION = "OTP dispatched for {phone_prefix}."
+    OTP_SENT_IN_PRODUCTION = "OTP dispatched for %(phone_prefix)s."
     OTP_HTTP_ERROR = "OTP request HTTP error for {phone_prefix}: {http_exc.status_code} - {http_exc.detail}"
     OTP_UNHANDLED_ERROR = "Unhandled error during OTP request for {phone_prefix}: {e}"
     OTP_VERIFICATION_ATTEMPT = (

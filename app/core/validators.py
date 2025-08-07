@@ -3,11 +3,31 @@ import re
 from app.core.constants import ValidationMessages
 from app.core.constants.validation import ValidationRegex
 from app.core.enums.app_env import AppEnv
-from app.core.enums.log_level import LogLevel
+from app.core.enums.log_levels import LogLevel
 
 
 # --- Translate .env LOG_LEVEL ---
 def validate_log_level_str(value: str | LogLevel) -> LogLevel:
+    if isinstance(value, LogLevel):  # Already enum
+        return value
+    if isinstance(value, str):
+        try:
+            return LogLevel[value.strip().upper()]  # strip() for safety
+        except KeyError:
+            raise ValueError(
+                ValidationMessages.INVALID_LOG_LEVEL_TEMPLATE.format(
+                    value=value, valid_levels=[member.name for member in LogLevel]
+                )
+            ) from KeyError
+    raise ValueError(
+        ValidationMessages.INVALID_INPUT_TYPE_LOG_LEVEL_TEMPLATE.format(
+            type_value=type(value)
+        )
+    )
+
+
+# --- Translate .env UVICORN_LOG_LEVEL ---
+def validate_uvicorn_log_level_str(value: str | LogLevel) -> LogLevel:
     if isinstance(value, LogLevel):  # Already enum
         return value
     if isinstance(value, str):

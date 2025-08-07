@@ -42,3 +42,16 @@ class LoggingStrings:
         MODEL_MISSING_ID_FOR_ORDERING = "Model {model_name} has no 'id' attribute for default ordering in get_multi."
         UPDATE_FIELD_NOT_FOUND = "Field '{field}' not found on model {model_name} during update for ID {record_id}. Skipping."
         MODEL_MISSING_ID_FOR_COUNT = "Model {model_name} has no 'id' attribute for optimized count. Counting all rows."
+
+
+class LoggingConstants:
+    DATE_FORMAT_STRING = "%Y-%m-%dT%H:%M:%SZ"
+
+    class LogColors:
+        RESET = "\033[0m"
+        GREEN = "\033[32m"
+        YELLOW = "\033[33m"
+        RED = "\033[31m"
+        BLUE = "\033[34m"
+        MAGENTA = "\033[35m"
+        CYAN = "\033[36m"

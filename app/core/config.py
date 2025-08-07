@@ -2,8 +2,12 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.core.enums.app_env import AppEnv
-from app.core.enums.log_level import LogLevel
-from app.core.validators import validate_app_env_str, validate_log_level_str
+from app.core.enums.log_levels import LogLevel
+from app.core.validators import (
+    validate_app_env_str,
+    validate_log_level_str,
+    validate_uvicorn_log_level_str,
+)
 
 
 class Settings(BaseSettings):
@@ -35,7 +39,11 @@ class Settings(BaseSettings):
     # --- Environment ---
     APP_ENV: AppEnv = AppEnv.DEV
     LOG_LEVEL: LogLevel = LogLevel.INFO
+    UVICORN_LOG_LEVEL: LogLevel = LogLevel.INFO
+    LOG_COLORS_ENABLED: bool = True
     DEBUG_OTP_IN_RESPONSE: bool = False
+    LOG_TO_FILE: bool = False
+    LOG_FILE_PATH: str = "logs/app.log"
 
     # --- Postgres Settings ---
     PROJECT_NAME: str
@@ -60,6 +68,11 @@ class Settings(BaseSettings):
     @classmethod
     def validate_log_level_str(cls, v: str | LogLevel) -> LogLevel:
         return validate_log_level_str(v)
+
+    @field_validator("UVICORN_LOG_LEVEL", mode="before")
+    @classmethod
+    def validate_uvicorn_log_level_str(cls, v: str | LogLevel) -> LogLevel:
+        return validate_uvicorn_log_level_str(v)
 
     @field_validator("APP_ENV", mode="before")
     @classmethod

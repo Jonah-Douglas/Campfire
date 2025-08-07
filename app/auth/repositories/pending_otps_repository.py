@@ -11,7 +11,7 @@ from app.auth.constants import (
 from app.auth.models.pending_otp_model import OTPStatus, PendingOTP
 from app.core.config import settings
 from app.core.constants.repository_outcomes import GeneralLogs
-from app.core.logging_config import firelog
+from app.core.logging.logger_wrapper import firelog
 from app.core.repositories.base_repository import BaseRepository
 from app.core.security import hash_otp_value, verify_otp_value
 

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.auth.dependencies import get_current_user
 from app.core.constants.general import RouteSettings
-from app.core.logging_config import firelog
+from app.core.logging.logger_wrapper import firelog
 from app.core.schemas.response_schemas import GenericAPIResponse
 from app.db.session import SessionDependency
 from app.users.constants import (

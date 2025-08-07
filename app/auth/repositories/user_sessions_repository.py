@@ -10,7 +10,7 @@ from app.auth.constants import (
 )
 from app.auth.models.user_session_model import UserSession
 from app.core.constants.repository_outcomes import GeneralLogs
-from app.core.logging_config import firelog
+from app.core.logging.logger_wrapper import firelog
 from app.core.repositories.base_repository import BaseRepository
 
 

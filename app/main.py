@@ -5,10 +5,12 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+import uvicorn
 
 from app.auth.api.routes import auth as auth_router_module
 from app.core.config import settings
-from app.core.logging_config import firelog
+from app.core.logging.config_dict import LOGGING_CONFIG
+from app.core.logging.logger_wrapper import firelog
 from app.users.api.routes import users as user_router_module
 
 api_prefix = settings.API_V_STR
@@ -151,3 +153,13 @@ async def read_root() -> dict[str, Any]:
         "contact": app.contact,
         "license": app.license_info,
     }
+
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "app.main:app",  # String reference to your FastAPI app instance
+        host="0.0.0.0",  # Or settings.SERVER_HOST  # noqa: S104
+        port=8000,  # Or settings.SERVER_PORT
+        reload=True,  # Or settings.RELOAD_APP
+        log_config=LOGGING_CONFIG,  # <<< Pass the dictionary object directly
+    )

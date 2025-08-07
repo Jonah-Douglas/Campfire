@@ -4,8 +4,8 @@ from typing import Any, NoReturn
 
 from fastapi import HTTPException
 
-from app.core.enums.log_level import LogLevel
-from app.core.logging_config import firelog
+from app.core.enums.log_levels import LogLevel
+from app.core.logging.logger_wrapper import firelog
 
 
 def _get_caller_method_name() -> str:
