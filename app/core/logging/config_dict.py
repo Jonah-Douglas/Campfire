@@ -6,31 +6,44 @@ LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
+        # Main Campfire logs formatter
+        "color_formatter": {
+            "()": "app.core.logging.formatter.ColorizingFormatter",
+            "fmt": LogFormat.APP_DEFAULT.value,
+            "datefmt": LoggingConstants.DATE_FORMAT_STRING,
+            "use_colors": settings.LOG_COLORS_ENABLED,
+        },
         "extra_aware_formatter": {
             "()": "app.core.logging.formatter.ExtraAwareFormatter",
-            "format": LogFormat.APP_DEFAULT.value,  # Your main app log format
+            "fmt": LogFormat.APP_DEFAULT.value,
             "datefmt": LoggingConstants.DATE_FORMAT_STRING,
         },
         "uvicorn_colored_minimal_formatter": {
             "()": "app.core.logging.uvicorn_color_formatter.UvicornLogColorFormatter",
-            "format": UvicornFormat.COLORED_MINIMAL.value,
+            "fmt": UvicornFormat.COLORED_MINIMAL.value,
             "use_colors": settings.LOG_COLORS_ENABLED,
             "format_name": UvicornFormat.COLORED_MINIMAL.name,
         },
         "uvicorn_colored_detailed_formatter": {
             "()": "app.core.logging.uvicorn_color_formatter.UvicornLogColorFormatter",
-            "format": UvicornFormat.COLORED_DETAILED.value,
+            "fmt": UvicornFormat.COLORED_DETAILED.value,
             "datefmt": LoggingConstants.DATE_FORMAT_STRING,
             "use_colors": settings.LOG_COLORS_ENABLED,
             "format_name": UvicornFormat.COLORED_DETAILED.name,
         },
     },
     "handlers": {
-        # Handler for your application's console output
+        "console_colored": {
+            "class": "logging.StreamHandler",
+            "formatter": "color_formatter",
+            "level": settings.LOG_LEVEL.value,
+            "stream": "ext://sys.stdout",
+        },
+        # Handler for Application's console output
         "console_app": {
             "class": "logging.StreamHandler",
-            "formatter": "extra_aware_formatter",  # Use your custom formatter
-            "level": settings.LOG_LEVEL.value,  # Get level from settings
+            "formatter": "extra_aware_formatter",  # Custom formatter
+            "level": settings.LOG_LEVEL.value,
             "stream": "ext://sys.stdout",  # Output to standard out
         },
         # Handler for Uvicorn's error and general ASGI messages
@@ -49,7 +62,7 @@ LOGGING_CONFIG = {
     },
     "loggers": {
         settings.PROJECT_NAME: {
-            "handlers": ["console_app"],
+            "handlers": ["console_colored"],
             "level": settings.LOG_LEVEL.value,
             "propagate": False,
         },
@@ -80,11 +93,8 @@ LOGGING_CONFIG = {
             "propagate": False,
         },
     },
-    "root": {  # Optional: Configure the root logger as a fallback
-        # If your application and Uvicorn loggers have propagate=False,
-        # the root logger won't see their messages.
-        # This can be useful for catching logs from libraries that don't have specific loggers configured.
+    "root": {
         "handlers": ["console_app"],  # Or a more generic console handler
-        "level": settings.LOG_LEVEL.value,  # Or a higher level like "WARNING"
+        "level": settings.LOG_LEVEL.value,
     },
 }
