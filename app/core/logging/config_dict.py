@@ -7,17 +7,13 @@ LOGGING_CONFIG = {
     "disable_existing_loggers": False,
     "formatters": {
         # Main Campfire logs formatter
-        "color_formatter": {
-            "()": "app.core.logging.formatter.ColorizingFormatter",
+        "formatter": {
+            "()": "app.core.logging.formatter.Formatter",
             "fmt": LogFormat.APP_DEFAULT.value,
             "datefmt": LoggingConstants.DATE_FORMAT_STRING,
             "use_colors": settings.LOG_COLORS_ENABLED,
         },
-        "extra_aware_formatter": {
-            "()": "app.core.logging.formatter.ExtraAwareFormatter",
-            "fmt": LogFormat.APP_DEFAULT.value,
-            "datefmt": LoggingConstants.DATE_FORMAT_STRING,
-        },
+        # Main project uvicorn formatter
         "uvicorn_colored_minimal_formatter": {
             "()": "app.core.logging.uvicorn_color_formatter.UvicornLogColorFormatter",
             "fmt": UvicornFormat.COLORED_MINIMAL.value,
@@ -33,16 +29,10 @@ LOGGING_CONFIG = {
         },
     },
     "handlers": {
-        "console_colored": {
-            "class": "logging.StreamHandler",
-            "formatter": "color_formatter",
-            "level": settings.LOG_LEVEL.value,
-            "stream": "ext://sys.stdout",
-        },
         # Handler for Application's console output
         "console_app": {
             "class": "logging.StreamHandler",
-            "formatter": "extra_aware_formatter",  # Custom formatter
+            "formatter": "formatter",  # Custom formatter
             "level": settings.LOG_LEVEL.value,
             "stream": "ext://sys.stdout",  # Output to standard out
         },
@@ -62,7 +52,7 @@ LOGGING_CONFIG = {
     },
     "loggers": {
         settings.PROJECT_NAME: {
-            "handlers": ["console_colored"],
+            "handlers": ["console_app"],
             "level": settings.LOG_LEVEL.value,
             "propagate": False,
         },
