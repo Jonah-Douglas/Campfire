@@ -39,41 +39,64 @@ TWILIO_ERROR_CODE_MAP = {
 class TwilioSMSService(SMSServiceInterface):
     def __init__(self) -> None:
         self.use_test_creds = settings.TWILIO_USE_TEST_CREDENTIALS
-        log_prefix = TwilioServiceConstants.INIT_LOG_PREFIX
+        _init_log_prefix = (
+            TwilioServiceConstants.INIT_LOG_PREFIX
+        )  # Base prefix for init logs
+
+        log_extra_init = {
+            "use_test_creds": self.use_test_creds
+        }  # Common extra for init
 
         if self.use_test_creds:
             self.account_sid = settings.TWILIO_TEST_ACCOUNT_SID
             self.auth_token = settings.TWILIO_TEST_AUTH_TOKEN
-            firelog.info(f"{log_prefix} {TwilioServiceConstants.USING_TEST_CREDS}")
+            firelog.info(
+                f"{_init_log_prefix} {TwilioServiceConstants.USING_TEST_CREDS}",
+                extra=log_extra_init,
+            )
         else:
             self.account_sid = settings.TWILIO_ACCOUNT_SID
             self.auth_token = settings.TWILIO_AUTH_TOKEN
-            firelog.info(f"{log_prefix} {TwilioServiceConstants.USING_LIVE_CREDS}")
+            firelog.info(
+                f"{_init_log_prefix} {TwilioServiceConstants.USING_LIVE_CREDS}",
+                extra=log_extra_init,
+            )
 
         if not self.account_sid or not self.auth_token:
             msg = TwilioServiceConstants.CREDS_NOT_CONFIGURED
-            firelog.error(f"{log_prefix} {msg}")
-            raise ConfigurationError(msg, to_phone_number=None)
+            firelog.error(f"{_init_log_prefix} {msg}", extra=log_extra_init)
+            raise ConfigurationError(msg, to_phone_number=None)  # No specific phone yet
 
         self.from_phone_number = settings.TWILIO_FROM_PHONE_NUMBER
         if not self.from_phone_number:
             msg = TwilioServiceConstants.FROM_NUMBER_NOT_CONFIGURED
-            firelog.error(f"{log_prefix} {msg}")
+            firelog.error(f"{_init_log_prefix} {msg}", extra=log_extra_init)
             raise ConfigurationError(msg, to_phone_number=None)
 
         try:
             self.client = Client(self.account_sid, self.auth_token)
-            firelog.info(f"{log_prefix} {TwilioServiceConstants.CLIENT_INIT_SUCCESS}")
+            firelog.info(
+                f"{_init_log_prefix} {TwilioServiceConstants.CLIENT_INIT_SUCCESS}",
+                extra=log_extra_init,
+            )
         except Exception as e:
-            msg = TwilioServiceConstants.FAILED_TO_INIT_CLIENT_TEMPLATE.format(error=e)
-            firelog.error(f"{log_prefix} {msg}", exc_info=True)
+            log_extra_init_fail = {**log_extra_init, "error": str(e)}
+            # FAILED_TO_INIT_CLIENT_TEMPLATE has %(error)s
+            firelog.error(
+                f"{_init_log_prefix} {TwilioServiceConstants.FAILED_TO_INIT_CLIENT_TEMPLATE}",
+                exc_info=True,
+                extra=log_extra_init_fail,
+            )
+            # Exception messages are formatted directly
             if isinstance(e, TwilioRestException) and e.status == 401:
                 raise ConfigurationError(
                     TwilioServiceConstants.AUTH_FAILED_TEMPLATE.format(error_msg=e.msg),
                     provider_error_code=str(e.code),
                 ) from e
             raise SMSServiceProviderError(
-                msg, provider_error_code=str(getattr(e, "code", None))
+                TwilioServiceConstants.FAILED_TO_INIT_CLIENT_TEMPLATE
+                % log_extra_init_fail,  # For exception
+                provider_error_code=str(getattr(e, "code", None)),
             ) from e
 
     def _handle_twilio_error(
@@ -82,37 +105,60 @@ class TwilioSMSService(SMSServiceInterface):
         error_code_str: str | None,
         error_message: str | None,
         status: str | None,
+        current_log_prefix: str,  # Pass the current operation's log prefix
     ) -> Never:
         """Helper to raise appropriate custom exceptions based on Twilio error codes."""
         if error_code_str:
             exception_class = TWILIO_ERROR_CODE_MAP.get(
                 error_code_str, SMSServiceProviderError
             )
-            error_detail = f"Twilio Status: {status}, Error Code: {error_code_str}, Message: {error_message}"
+            error_detail_for_exc = f"Twilio Status: {status}, Error Code: {error_code_str}, Message: {error_message}"
+            log_extra_mapped_error = {
+                "to_phone_number": to_phone_number,
+                "error_detail": error_detail_for_exc,
+            }
+            # MAPPED_ERROR_TEMPLATE has %(to_phone_number)s, %(error_detail)s
             firelog.warning(
-                TwilioServiceConstants.MAPPED_ERROR_TEMPLATE.format(
-                    to_phone_number=to_phone_number, error_detail=error_detail
-                )
+                f"{current_log_prefix} {TwilioServiceConstants.MAPPED_ERROR_TEMPLATE}",
+                extra=log_extra_mapped_error,
             )
             raise exception_class(
-                error_detail,
+                error_detail_for_exc,  # Exception message
                 provider_error_code=error_code_str,
                 to_phone_number=to_phone_number,
             )
         else:
-            msg = TwilioServiceConstants.FAILED_WITH_STATUS_TEMPLATE.format(
-                to_phone_number=to_phone_number,
-                status=status,
-                error_message=error_message,
+            log_extra_failed_status = {
+                "to_phone_number": to_phone_number,
+                "status": str(status),
+                "error_message": str(error_message),
+            }
+            # FAILED_WITH_STATUS_TEMPLATE has %(to_phone_number)s, %(status)s, %(error_message)s
+            firelog.warning(
+                f"{current_log_prefix} {TwilioServiceConstants.FAILED_WITH_STATUS_TEMPLATE}",
+                extra=log_extra_failed_status,
             )
-            firelog.warning(msg)
-            raise SMSServiceProviderError(msg, to_phone_number=to_phone_number)
+            raise SMSServiceProviderError(
+                TwilioServiceConstants.FAILED_WITH_STATUS_TEMPLATE
+                % log_extra_failed_status,  # For exception
+                to_phone_number=to_phone_number,
+            )
 
     async def _make_twilio_api_call(
-        self, to_phone_number: str, message_body: str
+        self, to_phone_number: str, message_body: str, current_log_prefix: str
     ) -> MessageInstance:
         """Makes the actual API call to Twilio to create a message."""
-        firelog.debug(TwilioServiceConstants.ATTEMPTING_TO_SEND_SMS_TEMPLATE)
+        body_preview = message_body[:50]  # For log preview
+        log_extra_attempt = {
+            "body_preview": body_preview,
+            "use_test_creds": self.use_test_creds,
+            "to_phone_number": to_phone_number,  # Adding for context in the log line
+        }
+        # ATTEMPTING_TO_SEND_SMS_TEMPLATE has %(body_preview)s, %(use_test_creds)s
+        firelog.debug(
+            f"{current_log_prefix} {TwilioServiceConstants.ATTEMPTING_TO_SEND_SMS_TEMPLATE}",
+            extra=log_extra_attempt,
+        )
 
         message = await asyncio.to_thread(
             self.client.messages.create,
@@ -120,50 +166,69 @@ class TwilioSMSService(SMSServiceInterface):
             from_=self.from_phone_number,
             to=to_phone_number,
         )
-
-        firelog.info(TwilioServiceConstants.SEND_SMS_RESULT)
+        # Assuming SEND_SMS_RESULT is a general info message after the call
+        # It needs %(to_phone_number)s, %(message_sid)s, %(message_status)s
+        log_extra_result = {
+            "to_phone_number": to_phone_number,
+            "message_sid": message.sid,
+            "message_status": message.status,
+        }
+        firelog.info(
+            f"{current_log_prefix} {TwilioServiceConstants.SEND_SMS_RESULT}",
+            extra=log_extra_result,
+        )
         return message
 
     async def _handle_api_exception(
-        self, e: Exception, to_phone_number: str, log_prefix: str
-    ) -> None:  # This method will always raise
+        self, e: Exception, to_phone_number: str, current_log_prefix: str
+    ) -> Never:
         """Handles exceptions specifically from the Twilio API call or other unexpected errors."""
         if isinstance(e, TwilioRestException):
             error_code_str = str(e.code)
-            error_msg = TwilioServiceConstants.API_ERROR_TEMPLATE.format(
-                status=e.status, code=e.code, uri=e.uri, msg=e.msg
+            log_extra_api_error = {
+                "status": e.status,
+                "code": e.code,
+                "uri": e.uri,
+                "msg": e.msg,
+                "to_phone_number": to_phone_number,  # For context
+            }
+            # API_ERROR_TEMPLATE has %(status)s, %(code)s, %(uri)s, %(msg)s
+            firelog.error(
+                f"{current_log_prefix} {TwilioServiceConstants.API_ERROR_TEMPLATE}",
+                exc_info=True,
+                extra=log_extra_api_error,
             )
-            firelog.error(f"{log_prefix} {error_msg}", exc_info=True)
 
             exception_class = TWILIO_ERROR_CODE_MAP.get(
                 error_code_str, SMSServiceProviderError
             )
-            if e.status == 401:
+            if e.status == 401:  # Consistent with original logic
                 exception_class = ConfigurationError
 
-            # Extracting the user-facing part of the message
-            user_facing_error_detail = e.msg  # Or a more processed version
-            if " Message: " in error_msg:  # From your original code
-                user_facing_error_detail = error_msg.split(" Message: ")[1]
-
+            user_facing_error_detail = e.msg
             raise exception_class(
-                user_facing_error_detail,
+                user_facing_error_detail,  # Exception message
                 provider_error_code=error_code_str,
                 to_phone_number=to_phone_number,
             ) from e
         else:
-            # Generic exception
-            msg = TwilioServiceConstants.UNEXPECTED_SENDING_ERROR_TEMPLATE.format(
-                error=e
+            log_extra_unexpected = {"error": str(e), "to_phone_number": to_phone_number}
+            # UNEXPECTED_SENDING_ERROR_TEMPLATE has %(error)s
+            firelog.error(
+                f"{current_log_prefix} {TwilioServiceConstants.UNEXPECTED_SENDING_ERROR_TEMPLATE}",
+                exc_info=True,
+                extra=log_extra_unexpected,
             )
-            firelog.error(f"{log_prefix} {msg}", exc_info=True)
-            raise SMSSendingError(msg, to_phone_number=to_phone_number) from e
+            raise SMSSendingError(
+                TwilioServiceConstants.UNEXPECTED_SENDING_ERROR_TEMPLATE
+                % log_extra_unexpected,  # For exception
+                to_phone_number=to_phone_number,
+            ) from e
 
     def _process_twilio_message_response(
-        self, message: MessageInstance, to_phone_number: str, log_prefix: str
+        self, message: MessageInstance, to_phone_number: str, current_log_prefix: str
     ) -> str:
         """Processes the Twilio message object, checks status, and handles outcomes."""
-
         success_statuses = [
             TwilioServiceConstants.STATUS_QUEUED,
             TwilioServiceConstants.STATUS_ACCEPTED,
@@ -174,142 +239,208 @@ class TwilioSMSService(SMSServiceInterface):
             TwilioServiceConstants.STATUS_UNDELIVERED,
         ]
 
-        # Scenario 1: Success-like statuses
+        log_extra_base_response = {  # Common context for response processing
+            "sid": message.sid,
+            "status": message.status,
+            "error_code": message.error_code,
+            "to_phone_number": to_phone_number,
+        }
+
         if message.status in success_statuses:
             if message.error_code:
                 return self._handle_success_with_error_code(
-                    message, to_phone_number, log_prefix
+                    message, to_phone_number, current_log_prefix
                 )
-
             if message.sid is None:
-                msg = TwilioServiceConstants.DELIVERED_WITHOUT_SID
-                firelog.error(f"{log_prefix} {msg}")
+                # DELIVERED_WITHOUT_SID has %(message_status)s
+                # Note: The original template had {log_prefix}, which I'm replacing with prepending
+                log_extra_no_sid = {
+                    **log_extra_base_response,
+                    "message_status": message.status,
+                }
+                firelog.error(
+                    f"{current_log_prefix} {TwilioServiceConstants.DELIVERED_WITHOUT_SID}",
+                    extra=log_extra_no_sid,
+                )
                 raise SMSServiceProviderError(
-                    msg,
+                    TwilioServiceConstants.DELIVERED_WITHOUT_SID % log_extra_no_sid,
                     provider_error_code=str(message.error_code),
                     to_phone_number=to_phone_number,
                 )
             return message.sid
 
-        # Scenario 2: Explicit failure statuses
         elif message.status in failure_statuses:
             firelog.error(
-                f"{log_prefix} {TwilioServiceConstants.MESSAGE_FAILED_OR_UNDELIVERED}"
+                f"{current_log_prefix} {TwilioServiceConstants.MESSAGE_FAILED_OR_UNDELIVERED}",
+                extra=log_extra_base_response,  # General context
             )
-            self._handle_twilio_error(
+            self._handle_twilio_error(  # This will log more specifics
                 to_phone_number,
                 str(message.error_code),
                 message.error_message,
                 str(message.status),
+                current_log_prefix,
             )
 
-        # Scenario 3: Delivered status (often treated as ultimate success)
         elif message.status == TwilioServiceConstants.STATUS_DELIVERED:
+            # MESSAGE_DELIVERED_SYNC_TEMPLATE has %(sid)s
             firelog.info(
-                TwilioServiceConstants.MESSAGE_DELIVERED_SYNC_TEMPLATE.format(
-                    log_prefix_val=log_prefix, sid=message.sid
-                ).replace("{log_prefix_val} ", log_prefix)
+                f"{current_log_prefix} {TwilioServiceConstants.MESSAGE_DELIVERED_SYNC_TEMPLATE}",
+                extra={
+                    "sid": message.sid,
+                    "to_phone_number": to_phone_number,
+                },  # Specific for this
             )
-            if message.sid is None:
-                msg = TwilioServiceConstants.DELIVERED_WITHOUT_SID
-                firelog.error(f"{log_prefix} {msg}")
+            if (
+                message.sid is None
+            ):  # Redundant check based on above, but good for safety
+                log_extra_no_sid_delivered = {
+                    **log_extra_base_response,
+                    "message_status": message.status,
+                }
+                firelog.error(
+                    f"{current_log_prefix} {TwilioServiceConstants.DELIVERED_WITHOUT_SID}",
+                    extra=log_extra_no_sid_delivered,
+                )
                 raise SMSServiceProviderError(
-                    msg,
+                    TwilioServiceConstants.DELIVERED_WITHOUT_SID
+                    % log_extra_no_sid_delivered,
                     provider_error_code=str(message.error_code),
                     to_phone_number=to_phone_number,
                 )
             return message.sid
 
-        # Scenario 4: Unexpected status
-        else:
-            msg = TwilioServiceConstants.UNEXPECTED_STATUS_TEMPLATE.format(
-                status=message.status, sid=message.sid
+        else:  # Unexpected status
+            log_extra_unexpected_status = {
+                "status": message.status,
+                "sid": message.sid,
+                "to_phone_number": to_phone_number,
+            }
+            # UNEXPECTED_STATUS_TEMPLATE has %(status)s, %(sid)s
+            firelog.warning(
+                f"{current_log_prefix} {TwilioServiceConstants.UNEXPECTED_STATUS_TEMPLATE}",
+                extra=log_extra_unexpected_status,
             )
-            firelog.warning(f"{log_prefix} {msg}")
             raise SMSServiceProviderError(
-                msg,
+                TwilioServiceConstants.UNEXPECTED_STATUS_TEMPLATE
+                % log_extra_unexpected_status,
                 provider_error_code=str(message.error_code),
                 to_phone_number=to_phone_number,
             )
+        # Fallback, should ideally not be reached if logic is complete
         raise SMSServiceProviderError(
-            "Reached unexpected end of status processing.",
+            f"{current_log_prefix} Reached unexpected end of status processing.",
             to_phone_number=to_phone_number,
         )
 
     def _handle_success_with_error_code(
-        self, message: MessageInstance, to_phone_number: str, log_prefix: str
+        self, message: MessageInstance, to_phone_number: str, current_log_prefix: str
     ) -> str:
         """Handles cases where status is success-like but message.error_code is present."""
+        log_extra_sim_fail = {
+            "status": message.status,
+            "error_code": message.error_code,
+            "to_phone_number": to_phone_number,
+        }
         if self.use_test_creds:
+            # SIMULATED_FAILURE_TEMPLATE has %(status)s, %(error_code)s
             firelog.warning(
-                TwilioServiceConstants.SIMULATED_FAILURE_TEMPLATE.format(
-                    log_prefix_val=log_prefix,
-                    status=message.status,
-                    error_code=message.error_code,
-                ).replace("{log_prefix_val} ", log_prefix)
+                f"{current_log_prefix} {TwilioServiceConstants.SIMULATED_FAILURE_TEMPLATE}",
+                extra=log_extra_sim_fail,
             )
-            self._handle_twilio_error(
+            self._handle_twilio_error(  # This will log more specifics
                 to_phone_number,
                 str(message.error_code),
                 message.error_message,
                 str(message.status),
+                current_log_prefix,
             )
         else:
+            # ERROR_CODE_DESPITE_STATUS_TEMPLATE has %(status)s
             firelog.error(
-                TwilioServiceConstants.ERROR_CODE_DESPITE_STATUS_TEMPLATE.format(
-                    log_prefix_val=log_prefix, status=message.status
-                ).replace("{log_prefix_val} ", log_prefix)
+                f"{current_log_prefix} {TwilioServiceConstants.ERROR_CODE_DESPITE_STATUS_TEMPLATE}",
+                extra={
+                    "status": message.status,
+                    "to_phone_number": to_phone_number,
+                },  # Specific for this
             )
-            self._handle_twilio_error(
+            self._handle_twilio_error(  # This will log more specifics
                 to_phone_number,
                 str(message.error_code),
                 message.error_message,
                 str(message.status),
+                current_log_prefix,
             )
-        if message.sid is None:
+        # This part of the original code seems like it might not always be reachable
+        # if _handle_twilio_error always raises.
+        # However, keeping the logic as it implies _handle_twilio_error might not always raise.
+        if (
+            message.sid is None
+        ):  # Should be caught by _handle_twilio_error if it implies failure
+            log_extra_missing_sid = {"to_phone_number": to_phone_number}
+            firelog.error(
+                f"{current_log_prefix} {TwilioServiceConstants.MISSING_SID_AFTER_SUCCESS_AND_ERROR}",
+                extra=log_extra_missing_sid,
+            )
             raise SMSServiceProviderError(
                 TwilioServiceConstants.MISSING_SID_AFTER_SUCCESS_AND_ERROR,
                 to_phone_number=to_phone_number,
             )
-        return message.sid
+        return message.sid  # If _handle_twilio_error could return or not raise
 
     async def send_sms(self, to_phone_number: str, message_body: str) -> str:
-        log_prefix = TwilioServiceConstants.SEND_SMS_LOG_PREFIX_TEMPLATE.format(
-            to_phone_number=to_phone_number
-        )
+        # Construct the log prefix for this specific send_sms operation
+        # SEND_SMS_LOG_PREFIX_TEMPLATE has %(to_phone_number)s
+        _current_op_log_prefix = TwilioServiceConstants.SEND_SMS_LOG_PREFIX_TEMPLATE % {
+            "to_phone_number": to_phone_number
+        }
+        # Common extra for this send_sms operation
+        log_extra_send_op = {"to_phone_number": to_phone_number}
 
         if not self.client:
             msg = TwilioServiceConstants.CLIENT_NOT_INITIALIZED
-            firelog.error(f"{log_prefix} {msg}")
+            firelog.error(f"{_current_op_log_prefix} {msg}", extra=log_extra_send_op)
             raise ConfigurationError(msg, to_phone_number=to_phone_number)
 
-        if not self.from_phone_number:
+        if not self.from_phone_number:  # Should ideally be caught in __init__
             msg = TwilioServiceConstants.FROM_NUMBER_NOT_CONFIGURED
-            firelog.error(f"{log_prefix} {msg}")
+            firelog.error(f"{_current_op_log_prefix} {msg}", extra=log_extra_send_op)
             raise ConfigurationError(msg, to_phone_number=to_phone_number)
 
         try:
             message_instance = await self._make_twilio_api_call(
-                to_phone_number, message_body
+                to_phone_number, message_body, _current_op_log_prefix
             )
 
+            log_extra_attempt_result = {
+                "sid": message_instance.sid,
+                "status": message_instance.status,
+                "error_code": message_instance.error_code,
+                "price": message_instance.price,
+                "to_phone_number": to_phone_number,  # For consistency
+            }
+            # MESSAGE_ATTEMPT_RESULT_TEMPLATE has %(sid)s, %(status)s, %(error_code)s, %(price)s
             firelog.info(
-                TwilioServiceConstants.MESSAGE_ATTEMPT_RESULT_TEMPLATE.format(
-                    log_prefix_val=log_prefix,
-                    sid=message_instance.sid,
-                    status=message_instance.status,
-                    error_code=message_instance.error_code,
-                    price=message_instance.price,
-                ).replace("{log_prefix_val} ", log_prefix)
+                f"{_current_op_log_prefix} {TwilioServiceConstants.MESSAGE_ATTEMPT_RESULT_TEMPLATE}",
+                extra=log_extra_attempt_result,
             )
 
             return self._process_twilio_message_response(
-                message_instance, to_phone_number, log_prefix
+                message_instance, to_phone_number, _current_op_log_prefix
             )
 
-        except Exception as e:
-            await self._handle_api_exception(e, to_phone_number, log_prefix)
+        except Exception as e:  # Catch-all for logging before re-raising or handling
+            # _handle_api_exception is expected to log details and raise the appropriate custom exception
+            await self._handle_api_exception(e, to_phone_number, _current_op_log_prefix)
+            # This part should technically not be reached if _handle_api_exception always raises.
+            # Adding it for safety, ensuring an SMSSendingError is raised if it somehow does.
+            log_extra_unhandled = {"to_phone_number": to_phone_number, "error": str(e)}
+            firelog.critical(
+                f"{_current_op_log_prefix} {TwilioServiceConstants.UNHANDLED_EXCEPTION}",
+                exc_info=True,  # Critical, so include stack trace
+                extra=log_extra_unhandled,
+            )
             raise SMSSendingError(
-                TwilioServiceConstants.UNHANDLED_EXCEPTION,
+                TwilioServiceConstants.UNHANDLED_EXCEPTION % log_extra_unhandled,
                 to_phone_number=to_phone_number,
             ) from e

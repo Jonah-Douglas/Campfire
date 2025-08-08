@@ -4,10 +4,9 @@ class UserSuccessMessages:
     USERS_RETRIEVED = "Users retrieved successfully."
     CURRENT_USER_RETRIEVED = "Current user details retrieved successfully."
     USER_BY_ID_RETRIEVED_TEMPLATE = (
-        "User details for ID {user_id} retrieved successfully."
+        "User details for ID %(user_id)s retrieved successfully."
     )
-    USER_UPDATED_TEMPLATE = "User with ID {user_id} updated successfully."
-    USER_DELETED_SUCCESS_TEMPLATE = "User with ID {user_id} deleted successfully."
+    USER_UPDATED_TEMPLATE = "User with ID %(user_id)s updated successfully."
 
 
 class UserHttpErrorDetails:
@@ -15,15 +14,15 @@ class UserHttpErrorDetails:
     FORBIDDEN_ACCESS_RESOURCE = "You do not have permission to access this resource."
     FORBIDDEN_VIEW_USER = "You do not have permission to view this user's details."
     FORBIDDEN_UPDATE_USER = "You do not have permission to update this user."
-    USER_NOT_FOUND_TEMPLATE = "User with ID {user_id} not found."
+    USER_NOT_FOUND_TEMPLATE = "User with ID %(user_id)s not found."
     USER_NOT_FOUND_GENERIC = "User not found."
 
     # Service Specific Error Details
     PHONE_ALREADY_EXISTS_TEMPLATE = (
-        "A user with this phone number ({phone_number}) already exists."
+        "A user with this phone number (%(phone_number)s) already exists."
     )
     EMAIL_ALREADY_EXISTS_TEMPLATE = (
-        "This email address ({email}) is already in use by another account."
+        "This email address (%(email)s) is already in use by another account."
     )
     EMAIL_ALREADY_IN_USE = "This email address is already in use."
     PHONE_ALREADY_IN_USE = "This phone number is already in use."

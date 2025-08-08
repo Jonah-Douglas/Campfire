@@ -5,9 +5,9 @@ from sqlalchemy import delete, select, update as sa_update
 from sqlalchemy.orm import Session
 
 from app.auth.constants import (
-    UserSessionModelConstants,
     UserSessionRepoMessages as RepoMsg,
 )
+from app.auth.constants.repository_outcomes import UserSessionModelConstants
 from app.auth.models.user_session_model import UserSession
 from app.core.constants.repository_outcomes import GeneralLogs
 from app.core.logging.logger_wrapper import firelog
@@ -26,7 +26,8 @@ class UserSessionRepository(
 
     def __init__(self) -> None:
         super().__init__(UserSession)
-        firelog.debug(GeneralLogs.INIT_TEMPLATE.format(class_name=self._CLASS_NAME))
+        log_extra = {"model_name": self._MODEL_NAME}
+        firelog.debug(GeneralLogs.INIT_TEMPLATE, log_extra)
 
     def _get_jti_suffix(self, jti: str | None) -> str:
         """Helper to safely get the JTI suffix for logging."""
@@ -37,17 +38,9 @@ class UserSessionRepository(
     # --- Generic Overrides ---
     def create(self, db: Session, *, obj_in: _DummyUserSessionSchema) -> UserSession:
         _method_name = self.create.__name__
-        log_message = (
-            GeneralLogs.METHOD_ENTRY_TEMPLATE.format(
-                class_name=self._CLASS_NAME, method_name=_method_name
-            )
-            + " - Operation explicitly not implemented for UserSession."
-        )
-        firelog.warning(log_message)
+        firelog.debug(GeneralLogs.GENERIC_CREATE_NOT_IMPLEMENTED % self._CLASS_NAME)
         raise NotImplementedError(
-            GeneralLogs.GENERIC_CREATE_NOT_IMPLEMENTED.format(
-                model_name=self._MODEL_NAME
-            )
+            GeneralLogs.GENERIC_CREATE_NOT_IMPLEMENTED % self._CLASS_NAME
         )
 
     def update(
@@ -58,22 +51,9 @@ class UserSessionRepository(
         obj_in: _DummyUserSessionSchema,
     ) -> UserSession:
         _method_name = self.update.__name__
-        session_id = self._get_record_id(db_obj_to_update)
-        jti_suffix = self._get_jti_suffix(
-            getattr(db_obj_to_update, "refresh_token_jti", None)
-        )
-
-        log_message = (
-            GeneralLogs.METHOD_ENTRY_TEMPLATE.format(
-                class_name=self._CLASS_NAME, method_name=_method_name
-            )
-            + f" - Operation explicitly not implemented for {self._MODEL_NAME} ID: {session_id}, JTI Suffix: {jti_suffix}"
-        )
-        firelog.warning(log_message)
+        firelog.debug(GeneralLogs.GENERIC_UPDATE_NOT_IMPLEMENTED % self._CLASS_NAME)
         raise NotImplementedError(
-            GeneralLogs.GENERIC_UPDATE_NOT_IMPLEMENTED.format(
-                model_name=self._MODEL_NAME
-            )
+            GeneralLogs.GENERIC_UPDATE_NOT_IMPLEMENTED % self._CLASS_NAME
         )
 
     # --- Custom Methods ---
@@ -89,7 +69,12 @@ class UserSessionRepository(
     ) -> UserSession:
         _method_name = self.create_user_session.__name__
         jti_suffix = self._get_jti_suffix(refresh_token_jti)
-        firelog.info(RepoMsg.CREATING.format(user_id=user_id, jti_suffix=jti_suffix))
+
+        log_extra_creating = {
+            "user_id": user_id,
+            "jti_suffix": jti_suffix,
+        }
+        firelog.info(RepoMsg.CREATING, extra=log_extra_creating)
 
         if expires_at.tzinfo is None:
             expires_at = expires_at.replace(tzinfo=UTC)
@@ -106,13 +91,12 @@ class UserSessionRepository(
 
         def _success_log(created_session: UserSession) -> None:
             log_jti_suffix = self._get_jti_suffix(created_session.refresh_token_jti)
-            firelog.info(
-                RepoMsg.CREATED_SUCCESS.format(
-                    session_id=created_session.id,
-                    user_id=created_session.user_id,
-                    jti_suffix=log_jti_suffix,
-                )
-            )
+            log_extra_success = {
+                "session_id": created_session.id,
+                "user_id": created_session.user_id,
+                "jti_suffix": log_jti_suffix,
+            }
+            firelog.info(RepoMsg.CREATED_SUCCESS, extra=log_extra_success)
 
         return self._execute_commit_refresh_log(
             db=db,
@@ -127,7 +111,9 @@ class UserSessionRepository(
     ) -> UserSession | None:
         _method_name = self.get_session_by_jti.__name__
         jti_suffix = self._get_jti_suffix(refresh_token_jti)
-        firelog.info(RepoMsg.GET_BY_JTI.format(jti_suffix=jti_suffix))
+
+        log_extra_jti = {"jti_suffix": jti_suffix}
+        firelog.info(RepoMsg.GET_BY_JTI, extra=log_extra_jti)
 
         try:
             statement = select(self.model).where(
@@ -136,23 +122,23 @@ class UserSessionRepository(
             session_obj = db.execute(statement).scalar_one_or_none()
 
             if session_obj:
-                firelog.info(
-                    RepoMsg.FOUND_BY_JTI.format(
-                        session_id=session_obj.id, jti_suffix=jti_suffix
-                    )
-                )
+                log_extra_found = {
+                    "session_id": session_obj.id,
+                    "jti_suffix": jti_suffix,
+                }
+                firelog.info(RepoMsg.FOUND_BY_JTI, extra=log_extra_found)
             else:
-                firelog.info(RepoMsg.NOT_FOUND_BY_JTI.format(jti_suffix=jti_suffix))
+                firelog.info(RepoMsg.NOT_FOUND_BY_JTI, extra=log_extra_jti)
             return session_obj
         except Exception as e:
+            log_extra = {
+                "class_name": self._CLASS_NAME,
+                "method_name": _method_name,
+                "model_name": self._MODEL_NAME,
+                "error": str(e),
+            }
             firelog.error(
-                GeneralLogs.METHOD_ERROR_TEMPLATE.format(
-                    class_name=self._CLASS_NAME,
-                    method_name=_method_name,
-                    model_name=self._MODEL_NAME,
-                    error=str(e),
-                ),
-                exc_info=True,
+                GeneralLogs.METHOD_ERROR_TEMPLATE, exc_info=e, extra=log_extra
             )
             raise
 
@@ -161,11 +147,12 @@ class UserSessionRepository(
     ) -> UserSession | None:
         _method_name = self.get_active_session_by_jti_and_user.__name__
         jti_suffix = self._get_jti_suffix(refresh_token_jti)
-        firelog.info(
-            RepoMsg.GET_ACTIVE_BY_JTI_USER.format(
-                user_id=user_id, jti_suffix=jti_suffix
-            )
-        )
+
+        log_extra_get_active = {
+            "user_id": user_id,
+            "jti_suffix": jti_suffix,
+        }
+        firelog.info(RepoMsg.GET_ACTIVE_BY_JTI_USER, extra=log_extra_get_active)
         try:
             statement = (
                 select(self.model)
@@ -176,29 +163,28 @@ class UserSessionRepository(
             )
             session_obj = db.execute(statement).scalar_one_or_none()
             if session_obj:
+                log_extra_active_found = {
+                    "session_id": session_obj.id,
+                    "user_id": user_id,
+                    "jti_suffix": jti_suffix,
+                }
                 firelog.info(
-                    RepoMsg.ACTIVE_FOUND_BY_JTI_USER.format(
-                        session_id=session_obj.id,
-                        user_id=user_id,
-                        jti_suffix=jti_suffix,
-                    )
+                    RepoMsg.ACTIVE_FOUND_BY_JTI_USER, extra=log_extra_active_found
                 )
             else:
                 firelog.info(
-                    RepoMsg.ACTIVE_NOT_FOUND_BY_JTI_USER.format(
-                        user_id=user_id, jti_suffix=jti_suffix
-                    )
+                    RepoMsg.ACTIVE_NOT_FOUND_BY_JTI_USER, extra=log_extra_get_active
                 )
             return session_obj
         except Exception as e:
+            log_extra = {
+                "class_name": self._CLASS_NAME,
+                "method_name": _method_name,
+                "model_name": self._MODEL_NAME,
+                "error": str(e),
+            }
             firelog.error(
-                GeneralLogs.METHOD_ERROR_TEMPLATE.format(
-                    class_name=self._CLASS_NAME,
-                    method_name=_method_name,
-                    model_name=self._MODEL_NAME,
-                    error=str(e),
-                ),
-                exc_info=True,
+                GeneralLogs.METHOD_ERROR_TEMPLATE, exc_info=e, extra=log_extra
             )
             raise
 
@@ -210,26 +196,25 @@ class UserSessionRepository(
         user_id = session_to_invalidate.user_id
         jti_suffix = self._get_jti_suffix(session_to_invalidate.refresh_token_jti)
 
-        firelog.info(
-            RepoMsg.INVALIDATING.format(
-                session_id=session_id, user_id=user_id, jti_suffix=jti_suffix
-            )
-        )
+        log_extra_invalidating = {
+            "session_id": session_id,
+            "user_id": user_id,
+            "jti_suffix": jti_suffix,
+        }
+        firelog.info(RepoMsg.INVALIDATING, extra=log_extra_invalidating)
 
         session_to_invalidate.is_active = False
         session_to_invalidate.expires_at = datetime.now(UTC)
 
         def _success_log(invalidated_session: UserSession) -> None:
-            log_session_id = invalidated_session.id
-            log_user_id = invalidated_session.user_id
-            log_jti_suffix = self._get_jti_suffix(invalidated_session.refresh_token_jti)
-            firelog.info(
-                RepoMsg.INVALIDATED_SUCCESS.format(
-                    session_id=log_session_id,
-                    user_id=log_user_id,
-                    jti_suffix=log_jti_suffix,
-                )
-            )
+            log_extra_success = {
+                "session_id": invalidated_session.id,
+                "user_id": invalidated_session.user_id,
+                "jti_suffix": self._get_jti_suffix(
+                    invalidated_session.refresh_token_jti
+                ),
+            }
+            firelog.info(RepoMsg.INVALIDATED_SUCCESS, extra=log_extra_success)
 
         return self._execute_commit_refresh_log(
             db=db,
@@ -244,7 +229,9 @@ class UserSessionRepository(
     ) -> UserSession | None:
         _method_name = self.invalidate_session_by_jti.__name__
         jti_suffix = self._get_jti_suffix(refresh_token_jti)
-        firelog.info(RepoMsg.INVALIDATING_BY_JTI.format(jti_suffix=jti_suffix))
+
+        log_extra_invalidate_jti = {"jti_suffix": jti_suffix}
+        firelog.info(RepoMsg.INVALIDATING_BY_JTI, extra=log_extra_invalidate_jti)
 
         user_session_obj = self.get_session_by_jti(
             db=db, refresh_token_jti=refresh_token_jti
@@ -252,18 +239,22 @@ class UserSessionRepository(
 
         if user_session_obj:
             if not user_session_obj.is_active:
+                log_extra_already_inactive = {
+                    "jti_suffix": jti_suffix,
+                    "session_id": user_session_obj.id,
+                }
                 firelog.info(
-                    RepoMsg.INVALIDATE_BY_JTI_NOT_FOUND.format(
-                        session_id=user_session_obj.id, jti_suffix=jti_suffix
-                    )
+                    f"Session ID {user_session_obj.id} for JTI suffix {jti_suffix} is already inactive.",
+                    extra=log_extra_already_inactive,
                 )
-                return user_session_obj
+                return user_session_obj  # Return the inactive session
+            # If active, proceed to invalidate
             return self.invalidate_session(
                 db=db, session_to_invalidate=user_session_obj
             )
         else:
             firelog.warning(
-                RepoMsg.INVALIDATE_BY_JTI_NOT_FOUND.format(jti_suffix=jti_suffix)
+                RepoMsg.INVALIDATE_BY_JTI_NOT_FOUND, extra=log_extra_invalidate_jti
             )
             return None
 
@@ -272,11 +263,12 @@ class UserSessionRepository(
     ) -> int:
         _method_name = self.invalidate_all_sessions_for_user.__name__
         excluded_jti_suffix = self._get_jti_suffix(exclude_jti)
-        firelog.info(
-            RepoMsg.INVALIDATING_ALL_FOR_USER.format(
-                user_id=user_id, excluded_jti_suffix=excluded_jti_suffix
-            )
-        )
+
+        log_extra_base = {
+            "user_id": user_id,
+            "excluded_jti_suffix": excluded_jti_suffix,
+        }
+        firelog.info(RepoMsg.INVALIDATING_ALL_FOR_USER, extra=log_extra_base)
         try:
             update_values = {"is_active": False, "expires_at": datetime.now(UTC)}
             statement = (
@@ -292,36 +284,30 @@ class UserSessionRepository(
             db.commit()
             count = result.rowcount
 
+            log_extra_result = {**log_extra_base, "count": count}
             if count > 0:
                 firelog.info(
-                    RepoMsg.INVALIDATED_ALL_SUCCESS_COUNT.format(
-                        count=count,
-                        user_id=user_id,
-                        excluded_jti_suffix=excluded_jti_suffix,
-                    )
+                    RepoMsg.INVALIDATED_ALL_SUCCESS_COUNT, extra=log_extra_result
                 )
             else:
-                firelog.info(
-                    RepoMsg.INVALIDATE_ALL_NONE_FOUND.format(
-                        user_id=user_id, excluded_jti_suffix=excluded_jti_suffix
-                    )
-                )
+                firelog.info(RepoMsg.INVALIDATE_ALL_NONE_FOUND, extra=log_extra_base)
             return count
         except Exception as e:
             db.rollback()
+            log_extra_failed = {
+                **log_extra_base,
+                "error": str(e),
+            }
             firelog.error(
-                RepoMsg.INVALIDATE_ALL_FAILED.format(
-                    user_id=user_id,
-                    excluded_jti_suffix=excluded_jti_suffix,
-                    error=str(e),
-                ),
-                exc_info=True,
+                RepoMsg.INVALIDATE_ALL_FAILED, exc_info=e, extra=log_extra_failed
             )
             raise
 
     def cleanup_revoked_and_expired_sessions(self, db: Session) -> int:
         _method_name = self.cleanup_revoked_and_expired_sessions.__name__
-        firelog.info(RepoMsg.CLEANUP_STARTED.format(model_name=self._MODEL_NAME))
+        log_extra_start = {"model_name": self._MODEL_NAME}
+        firelog.info(RepoMsg.CLEANUP_STARTED, extra=log_extra_start)
+
         now = datetime.now(UTC)
 
         try:
@@ -331,18 +317,15 @@ class UserSessionRepository(
             result = db.execute(delete_statement)
             db.commit()
             count = result.rowcount
-            firelog.info(
-                RepoMsg.CLEANED_UP_SUCCESS_COUNT.format(
-                    model_name=self._MODEL_NAME, count=count
-                )
-            )
+
+            log_extra_cleaned = {"count": count, "model_name": self._MODEL_NAME}
+            firelog.info(RepoMsg.CLEANED_UP_SUCCESS_COUNT, extra=log_extra_cleaned)
             return count
         except Exception as e:
             db.rollback()
-            firelog.error(
-                RepoMsg.CLEANUP_FAILED.format(
-                    model_name=self._MODEL_NAME, error=str(e)
-                ),
-                exc_info=True,
-            )
+            log_extra_failed = {
+                "model_name": self._MODEL_NAME,
+                "error": str(e),
+            }
+            firelog.error(RepoMsg.CLEANUP_FAILED, exc_info=e, extra=log_extra_failed)
             raise

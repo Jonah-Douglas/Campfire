@@ -38,7 +38,7 @@ def create_access_token(
         SecurityConstants.JWT_CLAIM_EXP: expire,
         SecurityConstants.JWT_CLAIM_SUB: str(subject),
         SecurityConstants.JWT_CLAIM_IAT: datetime.now(UTC),
-        SecurityConstants.JWT_CLAIM_JTI: str(uuid.uuid4()),
+        SecurityConstants.JWT_CLAIM_JTI: str(uuid.uuid4()),  # JTI for access token
     }
 
     try:
@@ -49,16 +49,15 @@ def create_access_token(
         )
         return encoded_jwt
     except JWTError as e:
+        log_extra = {"subject": str(subject), "error": str(e)}
         firelog.error(
-            SecurityConstants.LOG_MSG_FAILED_CREATE_ACCESS_TOKEN_TEMPLATE.format(
-                subject=subject, error=e
-            ),
+            SecurityConstants.LOG_MSG_FAILED_CREATE_ACCESS_TOKEN_TEMPLATE,
             exc_info=True,
+            extra=log_extra,
         )
         raise TokenCreationError(
-            SecurityConstants.EXC_MSG_COULD_NOT_CREATE_ACCESS_TOKEN_TEMPLATE.format(
-                error=e
-            )
+            SecurityConstants.EXC_MSG_COULD_NOT_CREATE_ACCESS_TOKEN_TEMPLATE
+            % {"error": str(e)}
         ) from e
 
 
@@ -98,16 +97,15 @@ def create_refresh_token_with_jti(
         )
         return encoded_jwt, jti_val
     except JWTError as e:
+        log_extra = {"subject": str(subject), "error": str(e)}
         firelog.error(
-            SecurityConstants.LOG_MSG_FAILED_CREATE_REFRESH_TOKEN_TEMPLATE.format(
-                subject=subject, error=e
-            ),
+            SecurityConstants.LOG_MSG_FAILED_CREATE_REFRESH_TOKEN_TEMPLATE,
             exc_info=True,
+            extra=log_extra,
         )
         raise TokenCreationError(
-            SecurityConstants.EXC_MSG_COULD_NOT_CREATE_REFRESH_TOKEN_TEMPLATE.format(
-                error=e
-            )
+            SecurityConstants.EXC_MSG_COULD_NOT_CREATE_REFRESH_TOKEN_TEMPLATE
+            % {"error": str(e)}
         ) from e
 
 
@@ -123,7 +121,6 @@ def hash_otp_value(otp: str) -> str:
     if not hasattr(settings, "OTP_HASH_SALT") or not settings.OTP_HASH_SALT:
         raise OTPConfigurationError(SecurityConstants.EXC_MSG_OTP_SALT_NOT_CONFIGURED)
 
-    # Ensure salt is a string if it comes from settings
     salt = str(settings.OTP_HASH_SALT)
     salted_otp = salt + otp
     return hashlib.sha256(salted_otp.encode("utf-8")).hexdigest()
@@ -140,10 +137,10 @@ def verify_otp_value(plain_otp: str, hashed_otp_from_storage: str) -> bool:
         firelog.error(SecurityConstants.LOG_MSG_OTP_VERIFICATION_FAILED_NO_SALT)
         return False
     except Exception as e:
+        log_extra = {"error": str(e)}
         firelog.error(
-            SecurityConstants.LOG_MSG_UNEXPECTED_OTP_VERIFICATION_ERROR_TEMPLATE.format(
-                error=e
-            ),
+            SecurityConstants.LOG_MSG_UNEXPECTED_OTP_VERIFICATION_ERROR_TEMPLATE,
             exc_info=True,
+            extra=log_extra,
         )
         return False

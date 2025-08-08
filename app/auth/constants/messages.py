@@ -2,7 +2,7 @@
 class AuthSuccessMessages:
     """Messages directly shown to the user for successful operations or general info."""
 
-    OTP_MESSAGE = "Your Campfire verification code is: {otp_code}"
+    OTP_MESSAGE = "Your Campfire verification code is: %(otp_code)s"
     LOGOUT_SUCCESS = "You have been successfully logged out."
     OTP_SENT_SUCCESSFULLY = "OTP has been dispatched via SMS."
     OTP_PROCESSED_SUCCESSFULLY = "OTP processed successfully."

@@ -1,3 +1,6 @@
+from app.auth.constants.logging_strings import ValidatorLoggingStrings
+
+
 # --- OTP Validation Logic ---
 def validate_otp_format(otp_code: str) -> str:
     """
@@ -16,14 +19,14 @@ def validate_otp_format(otp_code: str) -> str:
                     or contains non-digit characters.
     """
     if not otp_code:
-        raise ValueError("OTP code cannot be empty.")
+        raise ValueError(ValidatorLoggingStrings.OTP_EMPTY)
 
     # Check length first (common, fast check)
     if len(otp_code) != 6:
-        raise ValueError("Invalid OTP format. Must be 6 digits long.")
+        raise ValueError(ValidatorLoggingStrings.OTP_INCORRECT_LENGTH)
 
     # Check if all characters are digits
     if not otp_code.isdigit():
-        raise ValueError("Invalid OTP format. Must contain only digits.")
+        raise ValueError(ValidatorLoggingStrings.OTP_NOT_DIGITS)
 
     return otp_code

@@ -1,6 +1,7 @@
 from enum import Enum
 
 
+# --- Log Formats ---
 class LogFormat(Enum):
     # Application specific formats
     APP_DEFAULT = "%(levelname)s | %(asctime)s | %(name)s | %(module)s.%(funcName)s:%(lineno)d | %(message)s"

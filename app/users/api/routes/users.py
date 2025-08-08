@@ -37,21 +37,16 @@ def complete_current_user_profile(
 ) -> GenericAPIResponse[UserPublic]:
     """
     Allows the currently authenticated user to complete their profile.
-
-    This endpoint is typically used after initial registration (e.g., via OTP)
-    to provide essential profile details like name, email, and date of birth.
-    It can only be called if the user's profile is not already marked as complete.
     """
+    log_extra_request = {"user_id": current_user.id}
     firelog.info(
-        UserLoggingStrings.REQUEST_COMPLETE_PROFILE_TEMPLATE.format(
-            user_id=current_user.id
-        )
+        UserLoggingStrings.REQUEST_COMPLETE_PROFILE_TEMPLATE, extra=log_extra_request
     )
+
     if current_user.is_profile_complete:
         firelog.warning(
-            UserLoggingStrings.PROFILE_ALREADY_COMPLETE_TEMPLATE.format(
-                user_id=current_user.id
-            )
+            UserLoggingStrings.PROFILE_ALREADY_COMPLETE_TEMPLATE,
+            extra=log_extra_request,
         )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -64,9 +59,8 @@ def complete_current_user_profile(
     user_data_payload = UserPublic.model_validate(updated_user)
 
     firelog.info(
-        UserLoggingStrings.PROFILE_COMPLETED_SUCCESS_TEMPLATE.format(
-            user_id=current_user.id
-        )
+        UserLoggingStrings.PROFILE_COMPLETED_SUCCESS_TEMPLATE,
+        extra=log_extra_request,
     )
     return GenericAPIResponse.success_response(
         data_payload=user_data_payload, msg=UserSuccessMessages.PROFILE_COMPLETED
@@ -83,35 +77,25 @@ def read_users(
     session: SessionDependency,
     current_user: User = Depends(get_current_user),  # noqa: B008
     user_service: UserService = Depends(UserService),  # noqa: B008
-    skip: int = Query(
-        RouteSettings.DEFAULT_SKIP,
-        ge=0,
-        description="Number of records to skip for pagination.",
-    ),
-    limit: int = Query(
-        RouteSettings.DEFAULT_LIMIT,
-        ge=1,
-        le=RouteSettings.MAX_LIMIT,
-        description="Maximum number of records to return.",
-    ),
+    skip: int = Query(RouteSettings.DEFAULT_SKIP, ge=0),
+    limit: int = Query(RouteSettings.DEFAULT_LIMIT, ge=1, le=RouteSettings.MAX_LIMIT),
 ) -> GenericAPIResponse[UsersPublic]:
     """
-    Retrieve a paginated list of users.
-
-    Requires **superuser privileges**.
+    Retrieve a paginated list of users. Requires superuser privileges.
     """
+    log_extra_list_request = {"user_id": current_user.id, "skip": skip, "limit": limit}
     firelog.info(
-        UserLoggingStrings.LIST_USERS_REQUEST_TEMPLATE.format(
-            user_id=current_user.id, skip=skip, limit=limit
-        )
+        UserLoggingStrings.LIST_USERS_REQUEST_TEMPLATE, extra=log_extra_list_request
     )
+
     if not current_user.is_superuser:
+        log_extra_forbidden = {
+            "current_user_id": current_user.id,
+            "action_description": "list all users",
+            "target_user_id": "N/A",
+        }
         firelog.warning(
-            UserLoggingStrings.FORBIDDEN_TEMPLATE.format(
-                current_user_id=current_user.id,
-                action_description="list all users",
-                target_user_id="N/A",
-            )
+            UserLoggingStrings.FORBIDDEN_TEMPLATE, extra=log_extra_forbidden
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -120,11 +104,8 @@ def read_users(
 
     users_public_data = user_service.get_users(db=session, skip=skip, limit=limit)
 
-    firelog.info(
-        UserLoggingStrings.USERS_LISTED_TEMPLATE.format(
-            count=users_public_data.count, user_id=current_user.id
-        )
-    )
+    log_extra_listed = {"count": users_public_data.count, "user_id": current_user.id}
+    firelog.info(UserLoggingStrings.USERS_LISTED_TEMPLATE, extra=log_extra_listed)
     return GenericAPIResponse.success_response(
         data_payload=users_public_data, msg=UserSuccessMessages.USERS_RETRIEVED
     )
@@ -142,12 +123,13 @@ def read_user_me(
     """
     Fetch the complete profile information for the currently authenticated user.
     """
-    firelog.info(
-        UserLoggingStrings.GET_ME_REQUEST_TEMPLATE.format(user_id=current_user.id)
-    )
+    log_extra_me = {"user_id": current_user.id}
+    firelog.info(UserLoggingStrings.GET_ME_REQUEST_TEMPLATE, extra=log_extra_me)
+
     user_data_payload = UserPublic.model_validate(current_user)
     firelog.info(
-        UserLoggingStrings.GET_ME_SUCCESS_TEMPLATE.format(user_id=current_user.id)
+        UserLoggingStrings.GET_ME_SUCCESS_TEMPLATE,
+        extra=log_extra_me,
     )
     return GenericAPIResponse.success_response(
         data_payload=user_data_payload, msg=UserSuccessMessages.CURRENT_USER_RETRIEVED
@@ -168,22 +150,24 @@ def read_user_by_id(
 ) -> GenericAPIResponse[UserPublic]:
     """
     Retrieve information for a specific user by their unique ID.
-
-    - Authenticated users can retrieve their own information.
-    - **Superusers** can retrieve information for any user.
     """
+    log_extra_get_by_id_req = {
+        "current_user_id": current_user.id,
+        "target_user_id": user_id,
+    }
     firelog.info(
-        UserLoggingStrings.GET_USER_BY_ID_REQUEST_TEMPLATE.format(
-            current_user_id=current_user.id, target_user_id=user_id
-        )
+        UserLoggingStrings.GET_USER_BY_ID_REQUEST_TEMPLATE,
+        extra=log_extra_get_by_id_req,
     )
+
     if user_id != current_user.id and not current_user.is_superuser:
+        log_extra_forbidden = {
+            "current_user_id": current_user.id,
+            "action_description": "view user details",
+            "target_user_id": user_id,
+        }
         firelog.warning(
-            UserLoggingStrings.FORBIDDEN_TEMPLATE.format(
-                current_user_id=current_user.id,
-                action_description="view user details",
-                target_user_id=user_id,
-            )
+            UserLoggingStrings.FORBIDDEN_TEMPLATE, extra=log_extra_forbidden
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -192,25 +176,26 @@ def read_user_by_id(
 
     user = user_service.get_user_by_id(db=session, user_id=user_id)
     if not user:
+        log_extra_not_found = {
+            "user_id": user_id,
+        }
         firelog.warning(
-            UserLoggingStrings.USER_NOT_FOUND_TEMPLATE.format(
-                user_id=user_id, action="retrieving"
-            )
+            UserHttpErrorDetails.USER_NOT_FOUND_TEMPLATE, extra=log_extra_not_found
         )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=UserHttpErrorDetails.USER_NOT_FOUND_TEMPLATE.format(user_id=user_id),
+            detail=UserHttpErrorDetails.USER_NOT_FOUND_TEMPLATE % user_id,
         )
 
     user_data_payload = UserPublic.model_validate(user)
+    log_extra_get_by_id_success = {"target_user_id": user_id}
     firelog.info(
-        UserLoggingStrings.GET_USER_BY_ID_SUCCESS_TEMPLATE.format(
-            target_user_id=user_id
-        )
+        UserLoggingStrings.GET_USER_BY_ID_SUCCESS_TEMPLATE,
+        extra=log_extra_get_by_id_success,
     )
     return GenericAPIResponse.success_response(
         data_payload=user_data_payload,
-        msg=UserSuccessMessages.USER_BY_ID_RETRIEVED_TEMPLATE.format(user_id=user_id),
+        msg=UserSuccessMessages.USER_BY_ID_RETRIEVED_TEMPLATE % user_id,
     )
 
 
@@ -229,23 +214,23 @@ def update_user(
 ) -> GenericAPIResponse[UserPublic]:
     """
     Update attributes for a specific user.
-
-    - Authenticated users can update their own information.
-    - **Superusers** can update information for any user.
-    - Only fields present in the request body will be updated.
     """
+    log_extra_update_req = {
+        "current_user_id": current_user.id,
+        "target_user_id": user_id,
+    }
     firelog.info(
-        UserLoggingStrings.UPDATE_USER_REQUEST_TEMPLATE.format(
-            current_user_id=current_user.id, target_user_id=user_id
-        )
+        UserLoggingStrings.UPDATE_USER_REQUEST_TEMPLATE, extra=log_extra_update_req
     )
+
     if user_id != current_user.id and not current_user.is_superuser:
+        log_extra_forbidden = {
+            "current_user_id": current_user.id,
+            "action_description": "update user",
+            "target_user_id": user_id,
+        }
         firelog.warning(
-            UserLoggingStrings.FORBIDDEN_TEMPLATE.format(
-                current_user_id=current_user.id,
-                action_description="update user",
-                target_user_id=user_id,
-            )
+            UserLoggingStrings.FORBIDDEN_TEMPLATE, extra=log_extra_forbidden
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -259,23 +244,25 @@ def update_user(
         current_user=current_user,
     )
     if not updated_user:
+        log_extra_not_found = {
+            "user_id": user_id,
+        }
         firelog.warning(
-            UserLoggingStrings.USER_NOT_FOUND_TEMPLATE.format(
-                user_id=user_id, action="updating"
-            )
+            UserHttpErrorDetails.USER_NOT_FOUND_TEMPLATE, extra=log_extra_not_found
         )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=UserHttpErrorDetails.USER_NOT_FOUND_TEMPLATE.format(user_id=user_id),
+            detail=UserHttpErrorDetails.USER_NOT_FOUND_TEMPLATE % user_id,
         )
 
     user_data_payload = UserPublic.model_validate(updated_user)
+    log_extra_update_success = {"target_user_id": user_id}
     firelog.info(
-        UserLoggingStrings.USER_UPDATED_SUCCESS_TEMPLATE.format(target_user_id=user_id)
+        UserLoggingStrings.USER_UPDATED_SUCCESS_TEMPLATE, extra=log_extra_update_success
     )
     return GenericAPIResponse.success_response(
         data_payload=user_data_payload,
-        msg=UserSuccessMessages.USER_UPDATED_TEMPLATE.format(user_id=user_id),
+        msg=UserSuccessMessages.USER_UPDATED_TEMPLATE % user_id,
     )
 
 
@@ -293,26 +280,24 @@ def delete_user(
 ) -> None:
     """
     Delete a specific user by their ID.
-
-    - Authenticated users can delete their own account.
-    - **Superusers** can delete any user account (behavior for superuser deleting self might be restricted in the service layer).
-    - This operation is irreversible.
     """
+    log_extra_delete_req = {
+        "current_user_id": current_user.id,
+        "target_user_id": user_id,
+    }
     firelog.info(
-        UserLoggingStrings.DELETE_USER_REQUEST_TEMPLATE.format(
-            current_user_id=current_user.id, target_user_id=user_id
-        )
+        UserLoggingStrings.DELETE_USER_REQUEST_TEMPLATE, extra=log_extra_delete_req
     )
 
     deleted = user_service.remove_user(
         db=session, user_id_to_delete=user_id, current_user=current_user
     )
     if not deleted:
-        # This case means the user wasn't found, which the service handles by returning False.
+        log_extra_not_found = {
+            "user_id": user_id,
+        }
         firelog.warning(
-            UserLoggingStrings.USER_NOT_FOUND_TEMPLATE.format(
-                user_id=user_id, action="deleting"
-            )
+            UserHttpErrorDetails.USER_NOT_FOUND_TEMPLATE, extra=log_extra_not_found
         )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -320,7 +305,9 @@ def delete_user(
                 user_id=user_id
             ),
         )
+
+    log_extra_delete_success = {"target_user_id": user_id}
     firelog.info(
-        UserLoggingStrings.USER_DELETED_SUCCESS_TEMPLATE.format(target_user_id=user_id)
+        UserLoggingStrings.USER_DELETED_SUCCESS_TEMPLATE, extra=log_extra_delete_success
     )
-    return
+    return None

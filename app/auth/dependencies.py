@@ -6,6 +6,9 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import ValidationError
 
+from app.auth.constants.logging_strings import (
+    DependencyLoggingStrings,
+)
 from app.auth.repositories.pending_otps_repository import PendingOTPRepository
 from app.auth.repositories.user_sessions_repository import UserSessionRepository
 from app.auth.schemas.token_schema import AccessTokenPayload
@@ -39,14 +42,28 @@ def get_current_user(session: SessionDependency, token: TokenDependency) -> User
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
     except ValidationError as e:
-        firelog.warning(f"Malformed token payload: {e.errors()}")
+        log_extra = {
+            "error": str(e),
+        }
+        firelog.warning(
+            DependencyLoggingStrings.MALFORMED_TOKEN_PAYLOAD,
+            exc_info=e,
+            extra=log_extra,
+        )
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Could not validate credentials: Malformed token payload.",
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
     except Exception as e:
-        firelog.error(f"Unexpected error during token processing: {e}", exc_info=True)
+        log_extra = {
+            "error": str(e),
+        }
+        firelog.error(
+            DependencyLoggingStrings.UNEXPECTED_TOKEN_PROCESSING_ERROR,
+            exc_info=e,
+            extra=log_extra,
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while processing credentials.",
@@ -54,10 +71,25 @@ def get_current_user(session: SessionDependency, token: TokenDependency) -> User
 
     user = session.get(User, token_data.sub)
     if not user:
+        log_extra = {
+            "user_id": token_data.sub,
+        }
+        firelog.warning(
+            DependencyLoggingStrings.USER_NOT_FOUND_IN_TOKEN,
+            extra=log_extra,
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
         )
     if not user.is_active:
+        log_extra = {
+            "user_id": user.id,
+            "user_identifier": user.last_name,
+        }
+        firelog.warning(
+            DependencyLoggingStrings.INACTIVE_USER_AUTHENTICATION_ATTEMPT,
+            extra=log_extra,
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive."
         )

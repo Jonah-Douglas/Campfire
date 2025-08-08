@@ -1,4 +1,3 @@
-# In a dependencies.py or similar
 from typing import Annotated
 
 from fastapi import Depends

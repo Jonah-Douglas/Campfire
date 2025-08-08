@@ -68,7 +68,13 @@ async def request_otp(
             debug_otp_value = service_outcome["debug_otp_value"]
             otp_data_specific_message = AuthSuccessMessages.OTP_DEBUG_MODE
             api_response_general_message = AuthSuccessMessages.OTP_PROCESSED_DEV_MODE
-            firelog.debug(AuthLoggingStrings.OTP_SENT_IN_DEV_MODE, extra=log_extra)
+            current_log_extra = {
+                **log_extra,
+                "debug_otp_value": debug_otp_value,
+            }
+            firelog.debug(
+                AuthLoggingStrings.OTP_SENT_IN_DEV_MODE, extra=current_log_extra
+            )
         else:
             firelog.info(AuthLoggingStrings.OTP_SENT_IN_PRODUCTION, extra=log_extra)
 
@@ -78,8 +84,13 @@ async def request_otp(
         return GenericAPIResponse.success_response(
             data_payload=otp_data_payload, msg=api_response_general_message
         )
-    except HTTPException:
-        firelog.warning(AuthLoggingStrings.OTP_HTTP_ERROR, extra=log_extra)
+    except HTTPException as e:
+        current_log_extra = {
+            **log_extra,
+            "http_status_code": e.status_code,
+            "http_detail": e.detail,
+        }
+        firelog.warning(AuthLoggingStrings.OTP_HTTP_ERROR, extra=current_log_extra)
         raise
     except Exception as e:
         firelog.error(
@@ -116,7 +127,11 @@ async def verify_otp(
     phone_prefix = payload.phone_number[:7] if payload.phone_number else "N/A"
     client_host = request.client.host if request.client else "Unknown"
     user_agent = request.headers.get("user-agent")
-    log_extra = {"endpoint": AuthEndpoints.VERIFY_OTP, "phone_prefix": phone_prefix}
+    log_extra = {
+        "endpoint": AuthEndpoints.VERIFY_OTP,
+        "phone_prefix": phone_prefix,
+        "client_host": client_host,
+    }
 
     firelog.info(AuthLoggingStrings.OTP_VERIFICATION_ATTEMPT, extra=log_extra)
 
@@ -133,8 +148,15 @@ async def verify_otp(
         return GenericAPIResponse.success_response(
             data_payload=token_data, msg=AuthSuccessMessages.OTP_VERIFIED_SUCCESS
         )
-    except HTTPException:
-        firelog.warning(AuthLoggingStrings.OTP_FAILED_VERIFICATION, extra=log_extra)
+    except HTTPException as e:
+        current_log_extra = {
+            **log_extra,
+            "http_status_code": e.status_code,
+            "http_detail": e.detail,
+        }
+        firelog.warning(
+            AuthLoggingStrings.OTP_FAILED_VERIFICATION, extra=current_log_extra
+        )
         raise
     except Exception as e:
         firelog.error(
@@ -222,10 +244,15 @@ async def logout(
         )
         firelog.info(
             AuthLoggingStrings.LOGOUT_SUCCESS,
-            extra={"endpoint": AuthEndpoints.LOGOUT, "user_id": current_user.id},
+            extra=log_extra,
         )
-    except HTTPException:
-        firelog.warning(AuthLoggingStrings.LOGOUT_HTTP_ERROR, extra=log_extra)
+    except HTTPException as e:
+        current_log_extra = {
+            **log_extra,
+            "http_status_code": e.status_code,
+            "http_detail": e.detail,
+        }
+        firelog.warning(AuthLoggingStrings.LOGOUT_HTTP_ERROR, extra=current_log_extra)
         raise
     except Exception as e:
         firelog.error(

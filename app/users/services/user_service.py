@@ -4,6 +4,7 @@ from fastapi import status
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
+from app.core.constants.repository_outcomes import GeneralLogs
 from app.core.enums.log_levels import LogLevel
 from app.core.exceptions import log_and_raise_http_exception
 from app.core.logging.logger_wrapper import firelog
@@ -29,15 +30,12 @@ class UserService(BaseService[UserRepository]):
 
     def __init__(self, user_repository: UserRepoDependency) -> None:
         super().__init__(user_repository)
-        firelog.debug(f"Initialized {self._SERVICE_NAME}.")
+        firelog.debug(GeneralLogs.INIT_TEMPLATE % self._SERVICE_NAME)
 
     def get_user_by_id(self, db: Session, user_id: int) -> User:
         _method_name = self.get_user_by_id.__name__
-        firelog.info(
-            LogStr.GET_USER_BY_ID_ATTEMPT_TEMPLATE.format(
-                service_name=self._SERVICE_NAME, user_id=user_id
-            )
-        )
+        log_extra_attempt = {"service_name": self._SERVICE_NAME, "user_id": user_id}
+        firelog.info(LogStr.GET_USER_BY_ID_ATTEMPT_TEMPLATE, extra=log_extra_attempt)
         try:
             db_user = self._repository.get(db=db, id=user_id)
             if not db_user:
@@ -52,9 +50,7 @@ class UserService(BaseService[UserRepository]):
                     additional_log_info={"user_id": user_id},
                 )
             firelog.info(
-                LogStr.GET_USER_BY_ID_SUCCESS_TEMPLATE.format(
-                    service_name=self._SERVICE_NAME, user_id=user_id
-                )
+                LogStr.GET_USER_BY_ID_SUCCESS_TEMPLATE, extra=log_extra_attempt
             )
             return db_user
         except NoResultFound:
@@ -71,21 +67,21 @@ class UserService(BaseService[UserRepository]):
 
     def get_user_by_phone_number(self, db: Session, phone_number: str) -> User:
         _method_name = self.get_user_by_phone_number.__name__
-        firelog.info(
-            LogStr.GET_USER_BY_PHONE_ATTEMPT_TEMPLATE.format(
-                service_name=self._SERVICE_NAME, phone_number=phone_number
-            )
-        )
+        log_extra_attempt = {
+            "service_name": self._SERVICE_NAME,
+            "phone_number": phone_number,
+        }
+        firelog.info(LogStr.GET_USER_BY_PHONE_ATTEMPT_TEMPLATE, extra=log_extra_attempt)
         try:
             db_user = self._repository.get_by_phone_number(
                 db=db, phone_number=phone_number
             )
+            log_extra_success = {
+                "service_name": self._SERVICE_NAME,
+                "phone_number": phone_number,
+            }
             firelog.info(
-                LogStr.GET_USER_BY_PHONE_SUCCESS_TEMPLATE.format(
-                    service_name=self._SERVICE_NAME,
-                    phone_number=phone_number,
-                    user_id=db_user.id,
-                )
+                LogStr.GET_USER_BY_PHONE_SUCCESS_TEMPLATE, extra=log_extra_success
             )
             return db_user
         except NoResultFound:
@@ -100,17 +96,16 @@ class UserService(BaseService[UserRepository]):
 
     def get_user_by_email(self, db: Session, email: str) -> User:
         _method_name = self.get_user_by_email.__name__
-        firelog.info(
-            LogStr.GET_USER_BY_EMAIL_ATTEMPT_TEMPLATE.format(
-                service_name=self._SERVICE_NAME, email=email
-            )
-        )
+        log_extra_attempt = {"service_name": self._SERVICE_NAME, "email": email}
+        firelog.info(LogStr.GET_USER_BY_EMAIL_ATTEMPT_TEMPLATE, extra=log_extra_attempt)
         try:
             db_user = self._repository.get_by_email(db=db, email=email)
+            log_extra_success = {
+                "service_name": self._SERVICE_NAME,
+                "email": email,
+            }
             firelog.info(
-                LogStr.GET_USER_BY_EMAIL_SUCCESS_TEMPLATE.format(
-                    service_name=self._SERVICE_NAME, email=email, user_id=db_user.id
-                )
+                LogStr.GET_USER_BY_EMAIL_SUCCESS_TEMPLATE, extra=log_extra_success
             )
             return db_user
         except NoResultFound:
@@ -125,11 +120,12 @@ class UserService(BaseService[UserRepository]):
 
     def get_users(self, db: Session, skip: int, limit: int) -> UsersPublic:
         _method_name = self.get_users.__name__
-        firelog.info(
-            LogStr.GET_USERS_ATTEMPT_TEMPLATE.format(
-                service_name=self._SERVICE_NAME, skip=skip, limit=limit
-            )
-        )
+        log_extra_attempt = {
+            "service_name": self._SERVICE_NAME,
+            "skip": skip,
+            "limit": limit,
+        }
+        firelog.info(LogStr.GET_USERS_ATTEMPT_TEMPLATE, extra=log_extra_attempt)
         try:
             users_from_db: Sequence[User] = self._repository.get_multi(
                 db=db, skip=skip, limit=limit
@@ -138,11 +134,12 @@ class UserService(BaseService[UserRepository]):
 
             users_out_list = [UserPublic.model_validate(user) for user in users_from_db]
             result = UsersPublic(data=users_out_list, count=count)
-            firelog.info(
-                LogStr.GET_USERS_SUCCESS_TEMPLATE.format(
-                    service_name=self._SERVICE_NAME, count=result.count
-                )
-            )
+
+            log_extra_success = {
+                "service_name": self._SERVICE_NAME,
+                "count": result.count,
+            }
+            firelog.info(LogStr.GET_USERS_SUCCESS_TEMPLATE, extra=log_extra_success)
             return result
         except Exception:
             log_and_raise_http_exception(
@@ -159,18 +156,13 @@ class UserService(BaseService[UserRepository]):
     ) -> User:
         _method_name = self.create_user_via_otp.__name__
         phone = otp_flow_payload.phone_number
-        firelog.info(
-            LogStr.CREATE_OTP_USER_ATTEMPT_TEMPLATE.format(
-                service_name=self._SERVICE_NAME, phone_number=phone
-            )
-        )
+        log_extra_attempt = {"service_name": self._SERVICE_NAME, "phone_number": phone}
+        firelog.info(LogStr.CREATE_OTP_USER_ATTEMPT_TEMPLATE, extra=log_extra_attempt)
 
         if self._repository.exists_by_phone_number(db=db, phone_number=phone):
             log_and_raise_http_exception(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=UserHttpErrorDetails.PHONE_ALREADY_EXISTS_TEMPLATE.format(
-                    phone_number=phone
-                ),
+                detail=UserHttpErrorDetails.PHONE_ALREADY_EXISTS_TEMPLATE % phone,
                 log_level=LogLevel.WARNING,
                 service_name=self._SERVICE_NAME,
                 method_name=_method_name,
@@ -181,10 +173,12 @@ class UserService(BaseService[UserRepository]):
             db_user = self._repository.create_user_for_otp_flow(
                 db=db, phone_number=phone
             )
+            log_extra_success = {
+                "service_name": self._SERVICE_NAME,
+                "user_id": db_user.id,
+            }
             firelog.info(
-                LogStr.CREATE_OTP_USER_SUCCESS_TEMPLATE.format(
-                    service_name=self._SERVICE_NAME, user_id=db_user.id
-                )
+                LogStr.CREATE_OTP_USER_SUCCESS_TEMPLATE, extra=log_extra_success
             )
             return db_user
         except Exception:
@@ -203,15 +197,11 @@ class UserService(BaseService[UserRepository]):
     ) -> User:
         _method_name = self.complete_user_profile.__name__
         user_id = user_to_update.id
-        firelog.info(
-            LogStr.COMPLETE_PROFILE_ATTEMPT_TEMPLATE.format(
-                service_name=self._SERVICE_NAME, user_id=user_id
-            )
-        )
+        log_extra_attempt = {"service_name": self._SERVICE_NAME, "user_id": user_id}
+        firelog.info(LogStr.COMPLETE_PROFILE_ATTEMPT_TEMPLATE, extra=log_extra_attempt)
 
         if profile_in.email:
             try:
-                # First check if an email exists AND it's not the current user's email
                 if self._repository.exists_by_email(db=db, email=profile_in.email):
                     existing_user_with_email = self._repository.get_by_email(
                         db=db, email=profile_in.email
@@ -219,9 +209,8 @@ class UserService(BaseService[UserRepository]):
                     if existing_user_with_email.id != user_id:
                         log_and_raise_http_exception(
                             status_code=status.HTTP_409_CONFLICT,
-                            detail=UserHttpErrorDetails.EMAIL_ALREADY_EXISTS_TEMPLATE.format(
-                                email=profile_in.email
-                            ),
+                            detail=UserHttpErrorDetails.EMAIL_ALREADY_EXISTS_TEMPLATE
+                            % profile_in.email,
                             log_level=LogLevel.WARNING,
                             service_name=self._SERVICE_NAME,
                             method_name=_method_name,
@@ -237,10 +226,12 @@ class UserService(BaseService[UserRepository]):
             updated_user = self._repository.update_user_profile_completion(
                 db=db, db_user_to_update=user_to_update, profile_data=profile_in
             )
+            log_extra_success = {
+                "service_name": self._SERVICE_NAME,
+                "user_id": updated_user.id,
+            }
             firelog.info(
-                LogStr.COMPLETE_PROFILE_SUCCESS_TEMPLATE.format(
-                    service_name=self._SERVICE_NAME, user_id=updated_user.id
-                )
+                LogStr.COMPLETE_PROFILE_SUCCESS_TEMPLATE, extra=log_extra_success
             )
             return updated_user
         except Exception:
@@ -284,14 +275,10 @@ class UserService(BaseService[UserRepository]):
         error_detail_template: str,
         method_name: str,
     ) -> None:
-        """
-        Checks if a given field value (e.g., email or phone) is already in use by another user.
-        """
         if not field_value or field_value == current_field_value:
             return
 
         try:
-            # Determine which repository method to call based on field_name
             if field_name == "phone_number":
                 exists_method = self._repository.exists_by_phone_number
                 get_method = self._repository.get_by_phone_number
@@ -300,7 +287,11 @@ class UserService(BaseService[UserRepository]):
                 get_method = self._repository.get_by_email
             else:
                 firelog.error(
-                    f"Unsupported field_name '{field_name}' in _check_field_uniqueness"
+                    LogStr.UNSUPPORTED_FIELD,
+                    extra={
+                        "service_name": self._SERVICE_NAME,
+                        "field_name": field_name,
+                    },
                 )
                 return
 
@@ -320,10 +311,15 @@ class UserService(BaseService[UserRepository]):
                     )
         except NoResultFound:
             pass
-        except Exception as e:
+        except Exception:
             firelog.error(
-                f"Unexpected error during {field_name} uniqueness check for user {user_id_to_update}: {e}",
+                LogStr.ERROR_FIELD_UNIQUENESS,
                 exc_info=True,
+                extra={
+                    "service_name": self._SERVICE_NAME,
+                    "field_name": field_name,
+                    "user_id_to_update": user_id_to_update,
+                },
             )
             log_and_raise_http_exception(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -342,13 +338,12 @@ class UserService(BaseService[UserRepository]):
         current_user: User,
     ) -> User:
         _method_name = self.update_user_details.__name__
-        firelog.info(
-            LogStr.UPDATE_USER_ATTEMPT_TEMPLATE.format(
-                service_name=self._SERVICE_NAME,
-                current_user_id=current_user.id,
-                target_user_id=user_id_to_update,
-            )
-        )
+        log_extra_attempt = {
+            "service_name": self._SERVICE_NAME,
+            "current_user_id": current_user.id,
+            "target_user_id": user_id_to_update,
+        }
+        firelog.info(LogStr.UPDATE_USER_ATTEMPT_TEMPLATE, extra=log_extra_attempt)
 
         db_user_to_update = self.get_user_by_id(db=db, user_id=user_id_to_update)
 
@@ -358,7 +353,6 @@ class UserService(BaseService[UserRepository]):
             method_name=_method_name,
         )
 
-        # Check phone number uniqueness if provided and changed
         self._check_field_uniqueness(
             db=db,
             field_name="phone_number",
@@ -369,7 +363,6 @@ class UserService(BaseService[UserRepository]):
             method_name=_method_name,
         )
 
-        # Check email uniqueness if provided and changed
         self._check_field_uniqueness(
             db=db,
             field_name="email",
@@ -384,7 +377,11 @@ class UserService(BaseService[UserRepository]):
             update_data = user_in.model_dump(exclude_unset=True)
             if not update_data:
                 firelog.info(
-                    f"No update data provided for user {user_id_to_update}. Returning existing user."
+                    LogStr.NO_UPDATE_DATA,
+                    extra={
+                        "service_name": self._SERVICE_NAME,
+                        "user_id_to_update": user_id_to_update,
+                    },
                 )
                 return db_user_to_update
 
@@ -407,18 +404,21 @@ class UserService(BaseService[UserRepository]):
                     },
                 )
 
-            firelog.info(
-                LogStr.UPDATE_USER_SUCCESS_TEMPLATE.format(
-                    service_name=self._SERVICE_NAME,
-                    target_user_id=updated_user.id,
-                    current_user_id=current_user.id,
-                )
-            )
+            log_extra_success = {
+                "service_name": self._SERVICE_NAME,
+                "target_user_id": updated_user.id,
+                "current_user_id": current_user.id,
+            }
+            firelog.info(LogStr.UPDATE_USER_SUCCESS_TEMPLATE, extra=log_extra_success)
             return updated_user
         except Exception as e:
             firelog.error(
-                f"Failed to update user {user_id_to_update} in repository: {e}",
+                LogStr.FAILED_TO_UPDATE_USER,
                 exc_info=True,
+                extra={
+                    "service_name": self._SERVICE_NAME,
+                    "user_id_to_update": user_id_to_update,
+                },
             )
             log_and_raise_http_exception(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -435,15 +435,14 @@ class UserService(BaseService[UserRepository]):
 
     def remove_user(
         self, db: Session, user_id_to_delete: int, current_user: User
-    ) -> None:
+    ) -> bool:
         _method_name = self.remove_user.__name__
-        firelog.info(
-            LogStr.REMOVE_USER_ATTEMPT_TEMPLATE.format(
-                service_name=self._SERVICE_NAME,
-                current_user_id=current_user.id,
-                target_user_id=user_id_to_delete,
-            )
-        )
+        log_extra_attempt = {
+            "service_name": self._SERVICE_NAME,
+            "current_user_id": current_user.id,
+            "target_user_id": user_id_to_delete,
+        }
+        firelog.info(LogStr.REMOVE_USER_ATTEMPT_TEMPLATE, extra=log_extra_attempt)
 
         user_to_delete = self.get_user_by_id(db=db, user_id=user_id_to_delete)
         is_self_delete = user_to_delete.id == current_user.id
@@ -478,24 +477,25 @@ class UserService(BaseService[UserRepository]):
             if not deleted_user_from_repo:
                 log_and_raise_http_exception(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=UserHttpErrorDetails.USER_DELETE_NOT_FOUND_BY_REPO,
-                    log_level=LogLevel.ERROR,
+                    detail=UserHttpErrorDetails.USER_NOT_FOUND_TEMPLATE.format(
+                        user_id=user_id_to_delete
+                    ),
+                    log_level=LogLevel.WARNING,
                     service_name=self._SERVICE_NAME,
                     method_name=_method_name,
-                    additional_log_info={"target_user_id": user_id_to_delete},
+                    additional_log_info={
+                        "target_user_id": user_id_to_delete,
+                        "reason": "Repository delete returned None/False",
+                    },
                 )
-            firelog.info(
-                LogStr.REMOVE_USER_SUCCESS_TEMPLATE.format(
-                    service_name=self._SERVICE_NAME,
-                    target_user_id=user_id_to_delete,
-                    current_user_id=current_user.id,
-                )
-            )
-            return
+            firelog.info(LogStr.REMOVE_USER_SUCCESS_TEMPLATE, extra=log_extra_attempt)
+            return True
         except NoResultFound:
             log_and_raise_http_exception(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=UserHttpErrorDetails.USER_DELETE_NOT_FOUND_BY_REPO,
+                detail=UserHttpErrorDetails.USER_NOT_FOUND_TEMPLATE.format(
+                    user_id=user_id_to_delete
+                ),
                 log_level=LogLevel.WARNING,
                 service_name=self._SERVICE_NAME,
                 method_name=_method_name,
@@ -515,19 +515,15 @@ class UserService(BaseService[UserRepository]):
     def update_user_last_login(self, db: Session, user_to_update: User) -> User:
         _method_name = self.update_user_last_login.__name__
         user_id = user_to_update.id
-        firelog.info(
-            LogStr.UPDATE_LAST_LOGIN_ATTEMPT_TEMPLATE.format(
-                service_name=self._SERVICE_NAME, user_id=user_id
-            )
-        )
+        log_extra = {"service_name": self._SERVICE_NAME, "user_id": user_id}
+        firelog.info(LogStr.UPDATE_LAST_LOGIN_ATTEMPT_TEMPLATE, extra=log_extra)
         try:
             updated_user = self._repository.update_last_login_at(
                 db=db, user_to_update=user_to_update
             )
+            log_extra_success = {**log_extra, "user_id": updated_user.id}
             firelog.info(
-                LogStr.UPDATE_LAST_LOGIN_SUCCESS_TEMPLATE.format(
-                    service_name=self._SERVICE_NAME, user_id=updated_user.id
-                )
+                LogStr.UPDATE_LAST_LOGIN_SUCCESS_TEMPLATE, extra=log_extra_success
             )
             return updated_user
         except Exception:
@@ -546,21 +542,23 @@ class UserService(BaseService[UserRepository]):
     ) -> User:
         _method_name = self.set_user_active_status.__name__
         user_id = user_to_update.id
-        firelog.info(
-            LogStr.SET_ACTIVE_STATUS_ATTEMPT_TEMPLATE.format(
-                service_name=self._SERVICE_NAME, is_active=is_active, user_id=user_id
-            )
-        )
+        log_extra_attempt = {
+            "service_name": self._SERVICE_NAME,
+            "is_active": is_active,
+            "user_id": user_id,
+        }
+        firelog.info(LogStr.SET_ACTIVE_STATUS_ATTEMPT_TEMPLATE, extra=log_extra_attempt)
         try:
             updated_user = self._repository.set_active_status(
                 db=db, user_to_update=user_to_update, is_active=is_active
             )
+            log_extra_success = {
+                "service_name": self._SERVICE_NAME,
+                "is_active": updated_user.is_active,
+                "user_id": updated_user.id,
+            }
             firelog.info(
-                LogStr.SET_ACTIVE_STATUS_SUCCESS_TEMPLATE.format(
-                    service_name=self._SERVICE_NAME,
-                    is_active=updated_user.is_active,
-                    user_id=updated_user.id,
-                )
+                LogStr.SET_ACTIVE_STATUS_SUCCESS_TEMPLATE, extra=log_extra_success
             )
             return updated_user
         except Exception:

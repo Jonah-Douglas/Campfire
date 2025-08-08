@@ -9,16 +9,16 @@ class SecurityConstants:
 
     # Token Creation Log/Exception Messages
     LOG_MSG_FAILED_CREATE_ACCESS_TOKEN_TEMPLATE = (
-        "Failed to create access token for subject {subject}: {error}"  # noqa: S105
+        "Failed to create access token for subject %(subject)s: %(error)s"  # noqa: S105
     )
     EXC_MSG_COULD_NOT_CREATE_ACCESS_TOKEN_TEMPLATE = (
-        "Could not create access token: {error}"  # noqa: S105
+        "Could not create access token: %(error)s"  # noqa: S105
     )
     LOG_MSG_FAILED_CREATE_REFRESH_TOKEN_TEMPLATE = (
-        "Failed to create refresh token for subject {subject}: {error}"  # noqa: S105
+        "Failed to create refresh token for subject %(subject)s: %(error)s"  # noqa: S105
     )
     EXC_MSG_COULD_NOT_CREATE_REFRESH_TOKEN_TEMPLATE = (
-        "Could not create refresh token: {error}"  # noqa: S105
+        "Could not create refresh token: %(error)s"  # noqa: S105
     )
 
     # OTP Configuration/Verification Messages
@@ -27,5 +27,5 @@ class SecurityConstants:
         "OTP verification failed due to missing OTP_HASH_SALT configuration."
     )
     LOG_MSG_UNEXPECTED_OTP_VERIFICATION_ERROR_TEMPLATE = (
-        "Unexpected error during OTP verification: {error}"
+        "Unexpected error during OTP verification: %(error)s"
     )
