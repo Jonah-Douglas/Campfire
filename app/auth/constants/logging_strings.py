@@ -47,7 +47,7 @@ class AuthServiceLoggingStrings:
     )
     OTP_DEV_MODE_RESPONSE = (
         PREFIX
-        + "Sending OTP ending in ...%(otp_suffix)s in DEV mode response for phone: %(phone_number)s."
+        + "Sending OTP: %(otp)s in DEV mode response for phone: %(phone_number)s."
     )
     OTP_SENDING_VIA_SMS = (
         PREFIX

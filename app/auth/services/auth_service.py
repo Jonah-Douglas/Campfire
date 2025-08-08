@@ -52,7 +52,6 @@ class AuthService:
             db=db, phone_number=phone_number
         )
         plaintext_otp = self._generate_otp()
-        otp_suffix = plaintext_otp[-3:]
 
         try:
             pending_otp_record = self._otp_repository.create_pending_otp(
@@ -80,12 +79,12 @@ class AuthService:
                 detail=AuthHttpErrorDetails.OTP_CREATE_RECORD_FAILED,
             ) from e
 
-        if settings.APP_ENV == "dev" and settings.DEBUG_OTP_IN_RESPONSE:
+        if settings.APP_ENV.value == "dev" and settings.DEBUG_OTP_IN_RESPONSE:
             log_extra_dev_mode = {
                 "phone_number": phone_number,
-                "otp_suffix": otp_suffix,
+                "otp": plaintext_otp,
             }
-            firelog.info(LogStr.OTP_DEV_MODE_RESPONSE, extra=log_extra_dev_mode)
+            firelog.warning(LogStr.OTP_DEV_MODE_RESPONSE, extra=log_extra_dev_mode)
             return OTPData(
                 message=AuthSuccessMessages.OTP_DEBUG_MODE,
                 debug_otp=plaintext_otp,

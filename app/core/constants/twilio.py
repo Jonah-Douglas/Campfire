@@ -43,7 +43,7 @@ class TwilioServiceConstants:
     FAILED_WITH_STATUS_TEMPLATE = "Twilio SMS to %(to_phone_number)s failed with status '%(status)s'. Message: %(error_message)s"
 
     # Twilio API Error Messages
-    API_ERROR_TEMPLATE = "Twilio API Error: Status %(status)s, Code %(code)s, URI %(uri)s, Message: %(msg)s"
+    API_ERROR_TEMPLATE = "Twilio API Error: Status %(status)s, Code %(code)s, URI %(uri)s, Message: %(twilio_msg)s"
     UNEXPECTED_SENDING_ERROR_TEMPLATE = "Unexpected error sending SMS: %(error)s"
 
     # Twilio Statuses
