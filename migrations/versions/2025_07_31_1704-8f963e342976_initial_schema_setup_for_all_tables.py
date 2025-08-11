@@ -1,7 +1,7 @@
 """Initial schema setup for all tables
 
 Revision ID: 8f963e342976
-Revises: 
+Revises:
 Create Date: 2025-07-31 17:04:26.421038
 
 """
@@ -22,11 +22,11 @@ def upgrade() -> None:
         "users",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("phone_number", sa.String(30), nullable=False),
-        sa.Column("email", sa.String(255), nullable=False),
+        sa.Column("email", sa.String(255), nullable=True),
         sa.Column("first_name", sa.String(50), nullable=True),
         sa.Column("last_name", sa.String(50), nullable=True),
         sa.Column("date_of_birth", sa.Date(), nullable=True),
-        sa.Column("enable_notifications", sa.Boolean(), nullable=False, server_default=sa.text('true')),
+        sa.Column("is_enable_notifications", sa.Boolean(), nullable=False, server_default=sa.text('true')),
         sa.Column("is_profile_complete", sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column("is_superuser", sa.Boolean(), nullable=False, server_default=sa.text('false')),

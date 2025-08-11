@@ -88,6 +88,7 @@ class AuthServiceLoggingStrings:
     USER_INACTIVE_LOGIN_ATTEMPT = (
         PREFIX + "Inactive user ID %(user_id)s attempted login."
     )
+    USER_UNEXPECTED_NONE = "User is unexpectedly None after get or create attempt."
     USER_EXISTING_LOGIN = PREFIX + "Existing user ID %(user_id)s logged in."
     TOKENS_CREATED = (
         PREFIX

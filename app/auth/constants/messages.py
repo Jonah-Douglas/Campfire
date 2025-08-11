@@ -31,6 +31,7 @@ class AuthHttpErrorDetails:
     USER_CREATE_FAILED = "Failed to create user account. Please try again."
     USER_INACTIVE = "Your account is currently inactive."
     USER_INACTIVE_OR_NOT_FOUND = "User account is inactive or not found."
+    UNEXPECTED_ERROR = "Unexpected error in user processing."
 
     # Token Related Errors
     REFRESH_TOKEN_INVALID = "Invalid or expired refresh token."  # noqa: S105

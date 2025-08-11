@@ -36,7 +36,7 @@ class FireLogger:
             # Adjust stacklevel:
             # 1 = current frame (_log)
             # 2 = caller of _log (e.g., self.info, self.debug)
-            effective_stack_level = 2 + stack_level_offset
+            effective_stack_level = 1 + 2 + stack_level_offset
 
             if extra:
                 log_method(

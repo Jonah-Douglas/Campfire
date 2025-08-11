@@ -3,6 +3,7 @@ import secrets
 
 from fastapi import Depends, HTTPException, status
 from jose import JWTError, jwt
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
 from app.auth.constants import (
@@ -20,6 +21,7 @@ from app.core.constants.security import SecurityConstants
 from app.core.dependencies import get_sms_service
 from app.core.logging.logger_wrapper import firelog
 from app.core.services.interfaces.sms_service_interface import SMSServiceInterface
+from app.users.models.user_model import User
 from app.users.repositories.user_repository import UserRepository
 
 
@@ -84,7 +86,7 @@ class AuthService:
                 "phone_number": phone_number,
                 "otp": plaintext_otp,
             }
-            firelog.warning(LogStr.OTP_DEV_MODE_RESPONSE, extra=log_extra_dev_mode)
+            firelog.debug(LogStr.OTP_DEV_MODE_RESPONSE, extra=log_extra_dev_mode)
             return OTPData(
                 message=AuthSuccessMessages.OTP_DEBUG_MODE,
                 debug_otp=plaintext_otp,
@@ -172,11 +174,18 @@ class AuthService:
         }
         firelog.info(LogStr.OTP_VERIFIED_SUCCESS, extra=log_extra_verified_success)
 
-        user = self._user_repository.get_by_phone_number(
-            db=db, phone_number=phone_number
-        )
+        user: User | None = None
         is_new_user = False
         log_extra_user_phone = {"phone_number": phone_number}
+
+        try:
+            user = self._user_repository.get_by_phone_number(
+                db=db, phone_number=phone_number
+            )
+        except NoResultFound:
+            firelog.debug(LogStr.USER_NOT_FOUND_CREATING, extra=log_extra_user_phone)
+            # User does not exist, proceed to create
+            pass
 
         if not user:
             firelog.info(LogStr.USER_NOT_FOUND_CREATING, extra=log_extra_user_phone)
@@ -209,6 +218,16 @@ class AuthService:
                 )
             self._user_repository.update_last_login_at(db=db, user_to_update=user)
             firelog.info(LogStr.USER_EXISTING_LOGIN, extra=log_extra_user_id_only)
+
+        if not user:
+            firelog.error(
+                LogStr.USER_UNEXPECTED_NONE,
+                extra=log_extra_user_phone,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=AuthHttpErrorDetails.UNEXPECTED_ERROR,
+            )
 
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = security.create_access_token(
