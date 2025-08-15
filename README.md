@@ -78,27 +78,27 @@ project_root/<br>
 ├── app/<br>
 │&emsp;├── auth/                     # Feature: Authentication<br>
 │&emsp;│&emsp;├── api/               # FastAPI routes for auth<br>
-│&emsp;│&emsp;│&emsp;└── routes_auth.py<br>
-│   │   ├── models/               # FastAPI Models for auth<br>
-│   │   │   └── pending_otp.py<br>
-│   │   ├── repositories/         # FastAPI DL for auth<br>
-│   │   │   └── pending_otps_repository.py<br>
-│   │   ├── schema/               # FastAPI Schema for auth<br>
-│   │   │   └── pending_otp.py<br>
-│   │   ├── services/             # FastAPI BL for auth<br>
-│   │   │   └── pending_otp.py<br>
-│   │   └── dependencies.py       # Pydantic schemas for auth<br>
-│   │<br>
-│   # ... other feature folders ...<br>
-│   │<br>
-│   ├── core/                     # SHARED: Global configuration and security utilities<br>
-│   └── db/                       # SHARED: Database setup and base definitions<br>
+│&emsp;│&emsp;│&emsp;&nbsp;└── routes_auth.py<br>
+│&emsp;│&emsp;├── models/               # FastAPI Models for auth<br>
+│&emsp;│&emsp;│&emsp;&nbsp;└── pending_otp.py<br>
+│&emsp;│&emsp;├── repositories/         # FastAPI DL for auth<br>
+│&emsp;│&emsp;│&emsp;&nbsp;└── pending_otps_repository.py<br>
+│&emsp;│&emsp;├── schema/               # FastAPI Schema for auth<br>
+│&emsp;│&emsp;│&emsp;&nbsp;└── pending_otp.py<br>
+│&emsp;│&emsp;├── services/             # FastAPI BL for auth<br>
+│&emsp;│&emsp;│&emsp;&nbsp;└── pending_otp.py<br>
+│&emsp;│&emsp;└── dependencies.py       # Pydantic schemas for auth<br>
+│&emsp;│<br>
+│&emsp;# ... other feature folders ...<br>
+│&emsp;│<br>
+│&emsp;├── core/                     # SHARED: Global configuration and security utilities<br>
+│&emsp;└── db/                       # SHARED: Database setup and base definitions<br>
 │<br>
 ├── alembic/                      # Alembic migrations (manages all models that use app.db.base.Base)<br>
-│   └── versions/<br>
+│&emsp;└── versions/<br>
 ├── tests/                        # Top-level tests directory, mirrors app structure<br>
-│   ├── auth/...<br>
-│   └── users/...<br>
+│&emsp;├── auth/...<br>
+│&emsp;└── users/...<br>
 │<br>
 ├── requirements.in<br>
 ├── requirements.txt<br>
