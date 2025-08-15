@@ -76,9 +76,9 @@ The project follows a feature-based organization for modularity and clarity:
 
 project_root/<br>
 ├── app/<br>
-│   ├── auth/                     # Feature: Authentication<br>
-│   │   ├── api/                  # FastAPI routes for auth<br>
-│   │   │   └── routes_auth.py<br>
+│&emsp;├── auth/                     # Feature: Authentication<br>
+│&emsp;│&emsp;├── api/               # FastAPI routes for auth<br>
+│&emsp;│&emsp;│&emsp;└── routes_auth.py<br>
 │   │   ├── models/               # FastAPI Models for auth<br>
 │   │   │   └── pending_otp.py<br>
 │   │   ├── repositories/         # FastAPI DL for auth<br>
