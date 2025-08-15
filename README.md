@@ -74,35 +74,35 @@ Campfire API is a backend service for an event aggregation and exploration appli
 
 The project follows a feature-based organization for modularity and clarity:
 
-project_root/
-├── app/
-│   ├── auth/                     # Feature: Authentication
-│   │   ├── api/                  # FastAPI routes for auth
-│   │   │   └── routes_auth.py
-│   │   ├── models/               # FastAPI Models for auth
-│   │   │   └── pending_otp.py
-│   │   ├── repositories/         # FastAPI DL for auth
-│   │   │   └── pending_otps_repository.py
-│   │   ├── schema/               # FastAPI Schema for auth
-│   │   │   └── pending_otp.py
-│   │   ├── services/             # FastAPI BL for auth
-│   │   │   └── pending_otp.py
-│   │   └── dependencies.py       # Pydantic schemas for auth
-│   │
-│   # ... other feature folders ...
-│   │
-│   ├── core/                     # SHARED: Global configuration and security utilities
-│   └── db/                       # SHARED: Database setup and base definitions
-│
-├── alembic/                      # Alembic migrations (manages all models that use app.db.base.Base)
-│   └── versions/
-├── tests/                        # Top-level tests directory, mirrors app structure
-│   ├── auth/...
-│   └── users/...
-│
-├── requirements.in
-├── requirements.txt
-└── README.md
+project_root/<br>
+├── app/<br>
+│   ├── auth/                     # Feature: Authentication<br>
+│   │   ├── api/                  # FastAPI routes for auth<br>
+│   │   │   └── routes_auth.py<br>
+│   │   ├── models/               # FastAPI Models for auth<br>
+│   │   │   └── pending_otp.py<br>
+│   │   ├── repositories/         # FastAPI DL for auth<br>
+│   │   │   └── pending_otps_repository.py<br>
+│   │   ├── schema/               # FastAPI Schema for auth<br>
+│   │   │   └── pending_otp.py<br>
+│   │   ├── services/             # FastAPI BL for auth<br>
+│   │   │   └── pending_otp.py<br>
+│   │   └── dependencies.py       # Pydantic schemas for auth<br>
+│   │<br>
+│   # ... other feature folders ...<br>
+│   │<br>
+│   ├── core/                     # SHARED: Global configuration and security utilities<br>
+│   └── db/                       # SHARED: Database setup and base definitions<br>
+│<br>
+├── alembic/                      # Alembic migrations (manages all models that use app.db.base.Base)<br>
+│   └── versions/<br>
+├── tests/                        # Top-level tests directory, mirrors app structure<br>
+│   ├── auth/...<br>
+│   └── users/...<br>
+│<br>
+├── requirements.in<br>
+├── requirements.txt<br>
+└── README.md<br>
 
 ---
 
