@@ -27,6 +27,9 @@ class User(Base):
     is_profile_complete: Mapped[bool] = mapped_column(
         Boolean, server_default=func.false(), nullable=False
     )
+    is_app_setup_complete: Mapped[bool] = mapped_column(
+        Boolean, server_default=func.false(), nullable=False
+    )
     is_active: Mapped[bool] = mapped_column(
         Boolean, server_default=func.false(), nullable=False
     )

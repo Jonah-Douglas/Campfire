@@ -15,14 +15,15 @@ class UserBase(BaseModel):
     first_name: Annotated[str, Field(max_length=50)] | None = None
     last_name: Annotated[str, Field(max_length=50)] | None = None
     date_of_birth: date | None = None
-    enable_notifications: bool = True
+    is_enable_notifications: bool = True
+    is_profile_complete: bool = False
+    is_app_setup_complete: bool = False
 
     @field_validator("phone_number")
     @classmethod
     def val_phone_number(cls, v: str) -> str:
         return validate_phone_e164(v)
 
-    # Pydantic V2 model_config
     model_config = {"from_attributes": True, "extra": "forbid"}
 
 
@@ -48,6 +49,7 @@ class UserCompleteProfile(BaseModel):
     last_name: Annotated[str, Field(min_length=1, max_length=50)]
     email: EmailStr
     date_of_birth: date
+    is_enable_notifications: bool
 
     model_config = {"extra": "forbid"}
 
@@ -61,7 +63,7 @@ class UserUpdate(BaseModel):
     first_name: Annotated[str, Field(min_length=1, max_length=50)] | None = None
     last_name: Annotated[str, Field(min_length=1, max_length=50)] | None = None
     date_of_birth: date | None = None
-    enable_notifications: bool | None = None
+    is_enable_notifications: bool | None = None
 
     @field_validator("phone_number", mode="before")
     @classmethod
@@ -85,7 +87,6 @@ class UserPublic(UserBase):
     """Public representation of a user, typically for API responses."""
 
     id: int
-    is_profile_complete: bool
     is_active: bool
     last_login_at: datetime | None = None
     updated_at: datetime

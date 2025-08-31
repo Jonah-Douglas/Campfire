@@ -28,6 +28,7 @@ def upgrade() -> None:
         sa.Column("date_of_birth", sa.Date(), nullable=True),
         sa.Column("is_enable_notifications", sa.Boolean(), nullable=False, server_default=sa.text('true')),
         sa.Column("is_profile_complete", sa.Boolean(), nullable=False, server_default=sa.text('false')),
+        sa.Column("is_app_setup_complete", sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column("is_superuser", sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column("last_login_at", sa.DateTime(timezone=True), nullable=True),
