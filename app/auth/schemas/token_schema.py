@@ -8,7 +8,24 @@ class Token(BaseModel):
     access_token: str
     refresh_token: str
     is_new_user: bool
+    is_profile_complete: bool
+    is_app_setup_complete: bool
     token_type: str = "bearer"  # noqa: S105
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "refresh_token": "dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4uLi4=",
+                    "token_type": "bearer",
+                    "is_new_user": False,
+                    "is_profile_complete": True,
+                    "is_app_setup_complete": False,
+                }
+            ]
+        }
+    }
 
 
 # --- Token Request Schemas ---

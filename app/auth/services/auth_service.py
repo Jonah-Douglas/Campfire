@@ -259,8 +259,10 @@ class AuthService:
         return Token(
             access_token=access_token,
             refresh_token=refresh_token,
-            token_type="bearer",  # noqa: S106
             is_new_user=is_new_user,
+            is_profile_complete=user.is_profile_complete,
+            is_app_setup_complete=user.is_app_setup_complete,
+            token_type="bearer",  # noqa: S106
         )
 
     async def refresh_access_token(
@@ -420,7 +422,9 @@ class AuthService:
             return Token(
                 access_token=new_access_token,
                 refresh_token=new_refresh_token,
-                is_new_user=not user_from_db.is_profile_complete,
+                is_new_user=False,
+                is_profile_complete=user_from_db.is_profile_complete,
+                is_app_setup_complete=user_from_db.is_app_setup_complete,
             )
         else:
             firelog.info(
@@ -429,7 +433,9 @@ class AuthService:
             return Token(
                 access_token=new_access_token,
                 refresh_token=refresh_token_str,
-                is_new_user=not user_from_db.is_profile_complete,
+                is_new_user=False,
+                is_profile_complete=user_from_db.is_profile_complete,
+                is_app_setup_complete=user_from_db.is_app_setup_complete,
             )
 
     async def logout_user(
